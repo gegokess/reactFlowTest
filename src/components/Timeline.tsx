@@ -170,9 +170,18 @@ export function Timeline({
         className="border border-gray-200"
         data-timeline-svg="true"
       >
-        {/* Header with time ticks */}
+        {/* Gradient definitions for modern visual effects */}
+        <defs>
+          <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style={{ stopColor: '#ffffff', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: '#ffffff', stopOpacity: 0 }} />
+          </linearGradient>
+        </defs>
+
+        {/* Header with time ticks - Modern minimal design */}
         <g>
-          <rect x="0" y="0" width={width} height={HEADER_HEIGHT} fill="#fafafa" />
+          <rect x="0" y="0" width={width} height={HEADER_HEIGHT} fill="#ffffff" />
+          <line x1="0" y1={HEADER_HEIGHT} x2={width} y2={HEADER_HEIGHT} stroke="#e5e7eb" strokeWidth="2" />
           {ticks.map((tick, i) => {
             const x = dateToX(tick);
             return (
@@ -182,18 +191,18 @@ export function Timeline({
                   y1="0"
                   x2={x}
                   y2={height}
-                  stroke="#e5e5e5"
-                  strokeWidth="1.5"
-                  strokeDasharray="4 4"
-                  opacity="0.6"
+                  stroke="#f3f4f6"
+                  strokeWidth="1"
+                  opacity="0.8"
                 />
                 <text
                   x={x}
-                  y={HEADER_HEIGHT - 25}
-                  fontSize="14"
-                  fill="#525252"
+                  y={HEADER_HEIGHT - 30}
+                  fontSize="13"
+                  fill="#6b7280"
                   textAnchor="middle"
                   fontWeight="500"
+                  letterSpacing="0.5"
                 >
                   {new Date(tick).toLocaleDateString('de-DE', {
                     day: '2-digit',
@@ -213,48 +222,45 @@ export function Timeline({
 
           return (
             <g key={ap.id}>
-              {/* AP Bracket */}
+              {/* AP Container - Modern minimal design */}
               <g>
-                <line
-                  x1={apX1}
-                  y1={y + 10}
-                  x2={apX1}
-                  y2={y + BAR_HEIGHT + 10}
-                  stroke="#2563eb"
-                  strokeWidth="3"
-                  strokeLinecap="round"
+                {/* Background bar for AP */}
+                <rect
+                  x={apX1}
+                  y={y + 5}
+                  width={apX2 - apX1}
+                  height={BAR_HEIGHT + 5}
+                  fill="#f8fafc"
+                  stroke="#e2e8f0"
+                  strokeWidth="1"
+                  rx="6"
+                  ry="6"
+                  opacity="0.8"
                 />
-                <line
-                  x1={apX1}
-                  y1={y + 10}
-                  x2={apX2}
-                  y2={y + 10}
-                  stroke="#2563eb"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-                <line
-                  x1={apX2}
-                  y1={y + 10}
-                  x2={apX2}
-                  y2={y + BAR_HEIGHT + 10}
-                  stroke="#2563eb"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
+                {/* AP Title with modern typography */}
                 <text
-                  x={apX1 + 10}
-                  y={y + 28}
-                  fontSize="15"
-                  fill="#1e40af"
+                  x={apX1 + 12}
+                  y={y + 26}
+                  fontSize="14"
+                  fill="#334155"
                   fontWeight="600"
-                  letterSpacing="0.3"
+                  letterSpacing="0.2"
                 >
                   {ap.title}
                 </text>
+                {/* Subtle start indicator */}
+                <rect
+                  x={apX1}
+                  y={y + 5}
+                  width="3"
+                  height={BAR_HEIGHT + 5}
+                  fill="#3b82f6"
+                  rx="2"
+                  ry="2"
+                />
               </g>
 
-              {/* UAPs */}
+              {/* UAPs - Modern flat design */}
               {ap.subPackages.map((uap, uapIndex) => {
                 const uapY = y + 45 + uapIndex * (SUBBAR_HEIGHT + 6);
                 const uapX1 = dateToX(uap.start);
@@ -263,55 +269,77 @@ export function Timeline({
 
                 return (
                   <g key={uap.id}>
-                    {/* UAP Bar */}
+                    {/* UAP Bar - Modern minimal style */}
                     <rect
                       x={uapX1}
                       y={uapY}
                       width={Math.max(uapWidth, 3)}
                       height={SUBBAR_HEIGHT}
-                      fill="#60a5fa"
-                      stroke="#3b82f6"
-                      strokeWidth="1.5"
-                      rx="4"
-                      ry="4"
+                      fill="#3b82f6"
+                      stroke="none"
+                      rx="6"
+                      ry="6"
+                      opacity="0.95"
                       className="cursor-grab"
                       onMouseDown={e => handleMouseDown(e, 'move', ap.id, uap.id, uap.start, uap.end)}
                     />
 
-                    {/* Left resize handle */}
+                    {/* Subtle progress indicator (optional visual enhancement) */}
                     <rect
-                      x={uapX1 - 4}
+                      x={uapX1}
                       y={uapY}
-                      width="8"
+                      width={Math.max(uapWidth, 3)}
                       height={SUBBAR_HEIGHT}
-                      fill="#1d4ed8"
+                      fill="url(#gradient)"
+                      stroke="none"
+                      rx="6"
+                      ry="6"
+                      opacity="0.15"
+                      pointerEvents="none"
+                    />
+
+                    {/* Left resize handle - minimalist */}
+                    <rect
+                      x={uapX1 - 2}
+                      y={uapY + 4}
+                      width="4"
+                      height={SUBBAR_HEIGHT - 8}
+                      fill="#1e40af"
                       rx="2"
                       ry="2"
+                      opacity="0"
                       className="cursor-ew-resize"
+                      style={{ transition: 'opacity 0.2s' }}
+                      onMouseOver={(e) => e.currentTarget.setAttribute('opacity', '1')}
+                      onMouseOut={(e) => e.currentTarget.setAttribute('opacity', '0')}
                       onMouseDown={e => handleMouseDown(e, 'resize-left', ap.id, uap.id, uap.start, uap.end)}
                     />
 
-                    {/* Right resize handle */}
+                    {/* Right resize handle - minimalist */}
                     <rect
-                      x={uapX2 - 4}
-                      y={uapY}
-                      width="8"
-                      height={SUBBAR_HEIGHT}
-                      fill="#1d4ed8"
+                      x={uapX2 - 2}
+                      y={uapY + 4}
+                      width="4"
+                      height={SUBBAR_HEIGHT - 8}
+                      fill="#1e40af"
                       rx="2"
                       ry="2"
+                      opacity="0"
                       className="cursor-ew-resize"
+                      style={{ transition: 'opacity 0.2s' }}
+                      onMouseOver={(e) => e.currentTarget.setAttribute('opacity', '1')}
+                      onMouseOut={(e) => e.currentTarget.setAttribute('opacity', '0')}
                       onMouseDown={e => handleMouseDown(e, 'resize-right', ap.id, uap.id, uap.start, uap.end)}
                     />
 
-                    {/* UAP Label */}
+                    {/* UAP Label - Modern typography */}
                     <text
-                      x={uapX1 + 8}
-                      y={uapY + SUBBAR_HEIGHT - 6}
+                      x={uapX1 + 10}
+                      y={uapY + SUBBAR_HEIGHT / 2 + 5}
                       fontSize="12"
-                      fill="white"
+                      fill="#ffffff"
                       fontWeight="500"
-                      letterSpacing="0.2"
+                      letterSpacing="0.3"
                     >
                       {uap.title}
                     </text>
@@ -322,42 +350,55 @@ export function Timeline({
           );
         })}
 
-        {/* Milestones */}
+        {/* Milestones - Modern minimal design */}
         {milestones.map((ms, msIndex) => {
           const x = dateToX(ms.date);
           const y = HEADER_HEIGHT + workPackages.length * ROW_HEIGHT + 40 + msIndex * 45;
 
           return (
             <g key={ms.id}>
-              {/* Diamond shape */}
-              <polygon
-                points={`${x},${y - 10} ${x + 10},${y} ${x},${y + 10} ${x - 10},${y}`}
-                fill="#fbbf24"
+              {/* Vertical indicator line - clean and subtle */}
+              <line
+                x1={x}
+                y1={HEADER_HEIGHT}
+                x2={x}
+                y2={y - 12}
                 stroke="#f59e0b"
-                strokeWidth="2.5"
-                strokeLinejoin="round"
+                strokeWidth="2"
+                strokeDasharray="4 6"
+                opacity="0.4"
               />
+
+              {/* Modern milestone marker - simple circle */}
+              <circle
+                cx={x}
+                cy={y}
+                r="8"
+                fill="#f59e0b"
+                stroke="#ffffff"
+                strokeWidth="2"
+              />
+
+              {/* Inner dot for depth */}
+              <circle
+                cx={x}
+                cy={y}
+                r="3"
+                fill="#ffffff"
+                opacity="0.9"
+              />
+
+              {/* Milestone label with modern typography */}
               <text
                 x={x + 16}
                 y={y + 5}
-                fontSize="14"
-                fill="#92400e"
+                fontSize="13"
+                fill="#78716c"
                 fontWeight="600"
                 letterSpacing="0.3"
               >
                 {ms.title}
               </text>
-              {/* Vertical line */}
-              <line
-                x1={x}
-                y1={HEADER_HEIGHT}
-                x2={x}
-                y2={y - 10}
-                stroke="#fbbf24"
-                strokeWidth="2"
-                strokeDasharray="6 4"
-                opacity="0.5"
-              />
             </g>
           );
         })}

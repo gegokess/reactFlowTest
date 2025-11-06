@@ -36,9 +36,9 @@ module.exports = {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
       boxShadow: {
-        'soft': '0 2px 8px rgba(0, 0, 0, 0.04)',
-        'medium': '0 4px 16px rgba(0, 0, 0, 0.08)',
-        'strong': '0 8px 32px rgba(0, 0, 0, 0.12)',
+        'soft': '0 1px 3px rgba(0, 0, 0, 0.03)',
+        'medium': '0 2px 8px rgba(0, 0, 0, 0.05)',
+        'strong': '0 4px 16px rgba(0, 0, 0, 0.08)',
       },
       borderRadius: {
         'xl': '0.75rem',
