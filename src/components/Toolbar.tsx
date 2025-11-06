@@ -76,7 +76,10 @@ export function Toolbar({
 
   return (
     <>
-      <div className="bg-white/95 backdrop-blur-xl border-b border-[#d1d1d6]/30 px-6 py-4 flex items-center gap-4 flex-wrap no-print shadow-soft">
+      <div className="bg-white/90 backdrop-blur-2xl border-b-2 border-purple-200/40 px-6 py-4 flex items-center gap-4 flex-wrap no-print shadow-medium relative">
+        {/* Subtle gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-50/20 via-transparent to-cyan-50/20 pointer-events-none"></div>
+        <div className="relative z-10 flex items-center gap-4 flex-wrap w-full">
         {/* Zoom Controls */}
         <div className="flex items-center gap-3">
           <label className="text-sm font-medium text-gray-600">Ansicht</label>
@@ -167,6 +170,7 @@ export function Toolbar({
           onChange={handleFileImport}
           className="hidden"
         />
+        </div>
       </div>
 
       {/* Import Text Modal */}

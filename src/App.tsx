@@ -81,7 +81,7 @@ function App() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[#f5f5f7]">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-[#FAFAF9] via-[#F5F5F4] to-[#E7E5E4]">
       {/* Toolbar */}
       <Toolbar
         projectName={project.name}
@@ -98,8 +98,8 @@ function App() {
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden gap-6 p-6">
         {/* Left Panel: Work Package Tree */}
-        <div className="w-[420px] bg-white rounded-2xl shadow-medium border border-[#d1d1d6]/50 overflow-hidden flex flex-col no-print">
-          <div className="p-8 border-b border-[#d1d1d6]/30">
+        <div className="w-[420px] bg-white rounded-3xl shadow-strong border border-purple-200/50 overflow-hidden flex flex-col no-print backdrop-blur-xl">
+          <div className="p-8 border-b border-purple-100/50 bg-gradient-to-r from-purple-50/30 to-transparent">
             <input
               type="text"
               value={project.name}
@@ -151,7 +151,7 @@ function App() {
         </div>
 
         {/* Right Panel: Timeline */}
-        <div className="flex-1 bg-white rounded-2xl shadow-medium border border-[#d1d1d6]/50 overflow-hidden print-full-width">
+        <div className="flex-1 bg-white rounded-3xl shadow-strong border border-cyan-200/50 overflow-hidden print-full-width backdrop-blur-xl">
           <Timeline
             workPackages={project.workPackages}
             milestones={project.milestones}
