@@ -81,7 +81,7 @@ function App() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-slate-50">
       {/* Toolbar */}
       <Toolbar
         projectName={project.name}
@@ -98,8 +98,8 @@ function App() {
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden gap-6 p-6">
         {/* Left Panel: Work Package Tree */}
-        <div className="w-[420px] bg-white rounded-2xl shadow-soft overflow-hidden flex flex-col no-print">
-          <div className="p-8 border-b border-gray-100">
+        <div className="w-[420px] bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col no-print">
+          <div className="p-8 border-b border-gray-200">
             <input
               type="text"
               value={project.name}
@@ -151,7 +151,7 @@ function App() {
         </div>
 
         {/* Right Panel: Timeline */}
-        <div className="flex-1 bg-white rounded-2xl shadow-soft overflow-hidden print-full-width">
+        <div className="flex-1 bg-white rounded-xl border border-gray-200 overflow-hidden print-full-width">
           <Timeline
             workPackages={project.workPackages}
             milestones={project.milestones}
