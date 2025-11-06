@@ -47,123 +47,129 @@ export function WorkPackageTree({
   };
 
   return (
-    <div className="h-full overflow-y-auto p-4 space-y-4">
+    <div className="h-full overflow-y-auto p-6 space-y-6">
       {/* Work Packages */}
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold text-gray-700">Arbeitspakete</h2>
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Arbeitspakete</h2>
         {workPackages.map(ap => {
           const isExpanded = expandedAps.has(ap.id);
           const hasUaps = ap.subPackages.length > 0;
           const isReadOnly = hasUaps;
 
           return (
-            <div key={ap.id} className="card">
+            <div key={ap.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
               {/* AP Header */}
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-3">
                 {hasUaps && (
                   <button
                     onClick={() => toggleExpand(ap.id)}
-                    className="icon-btn p-1"
+                    className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-white transition-colors"
                     title={isExpanded ? 'Zuklappen' : 'Aufklappen'}
                   >
-                    {isExpanded ? '▼' : '▶'}
+                    <svg className={`w-4 h-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </button>
                 )}
                 <input
                   type="text"
                   value={ap.title}
                   onChange={e => onUpdateWorkPackage(ap.id, { title: e.target.value })}
-                  className="input flex-1"
-                  placeholder="AP Titel"
+                  className="input flex-1 font-medium bg-white"
+                  placeholder="Arbeitspaket Titel"
                 />
                 <button
                   onClick={() => confirmDelete(ap.title, () => onDeleteWorkPackage(ap.id))}
-                  className="icon-btn text-red-600 hover:bg-red-50"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-600 transition-colors"
                   title="Löschen"
                 >
-                  🗑️
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
                 </button>
               </div>
 
               {/* AP Mode */}
-              <div className="flex items-center gap-2 mb-2">
-                <label className="text-sm text-gray-600">Modus:</label>
+              <div className="flex items-center gap-3 mb-3">
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Modus</label>
                 <select
                   value={ap.mode}
                   onChange={e => onUpdateWorkPackage(ap.id, { mode: e.target.value as 'auto' | 'manual' })}
-                  className="select text-sm"
+                  className="select text-sm bg-white"
                   disabled={hasUaps}
                 >
                   <option value="manual">Manuell</option>
                   <option value="auto">Auto (Rollup)</option>
                 </select>
                 {hasUaps && (
-                  <span className="text-xs text-gray-500">(Auto wegen UAPs)</span>
+                  <span className="text-xs text-gray-400">(Auto wegen UAPs)</span>
                 )}
               </div>
 
               {/* AP Dates */}
-              <div className="grid grid-cols-2 gap-2 mb-2">
+              <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
-                  <label className="text-xs text-gray-600 block mb-1">Start</label>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Start</label>
                   <input
                     type="date"
                     value={ap.start}
                     onChange={e => onUpdateWorkPackage(ap.id, { start: e.target.value })}
-                    className="input w-full text-sm"
+                    className="input w-full text-sm bg-white"
                     disabled={isReadOnly}
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-600 block mb-1">Ende</label>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Ende</label>
                   <input
                     type="date"
                     value={ap.end}
                     onChange={e => onUpdateWorkPackage(ap.id, { end: e.target.value })}
-                    className="input w-full text-sm"
+                    className="input w-full text-sm bg-white"
                     disabled={isReadOnly}
                   />
                 </div>
               </div>
 
               {isReadOnly && (
-                <p className="text-xs text-gray-500 mb-2">
-                  Datumsfelder sind read-only (werden von UAPs berechnet)
+                <p className="text-xs text-gray-400 mb-3 italic">
+                  Datum wird automatisch aus UAPs berechnet
                 </p>
               )}
 
               {/* Add UAP Button */}
               <button
                 onClick={() => onAddSubPackage(ap.id)}
-                className="btn-sm btn-primary w-full"
+                className="btn-sm btn-secondary w-full mt-2"
               >
-                + UAP hinzufügen
+                + Unterarbeitspaket
               </button>
 
               {/* Sub Packages */}
               {isExpanded && hasUaps && (
-                <div className="mt-3 ml-4 space-y-2 border-l-2 border-gray-200 pl-3">
+                <div className="mt-4 space-y-2">
                   {ap.subPackages.map(uap => (
-                    <div key={uap.id} className="bg-gray-50 p-2 rounded">
+                    <div key={uap.id} className="bg-white rounded-lg p-3 border border-gray-200">
                       <div className="flex items-center gap-2 mb-2">
                         <input
                           type="text"
                           value={uap.title}
                           onChange={e => onUpdateSubPackage(ap.id, uap.id, { title: e.target.value })}
                           className="input flex-1 text-sm"
-                          placeholder="UAP Titel"
+                          placeholder="Unterarbeitspaket Titel"
                         />
                         <button
                           onClick={() => confirmDelete(uap.title, () => onDeleteSubPackage(ap.id, uap.id))}
-                          className="icon-btn text-red-600 hover:bg-red-50 text-xs"
+                          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-600 transition-colors"
                           title="Löschen"
                         >
-                          🗑️
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
                         </button>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-xs text-gray-600 block mb-1">Start</label>
+                          <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Start</label>
                           <input
                             type="date"
                             value={uap.start}
@@ -172,7 +178,7 @@ export function WorkPackageTree({
                           />
                         </div>
                         <div>
-                          <label className="text-xs text-gray-600 block mb-1">Ende</label>
+                          <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1">Ende</label>
                           <input
                             type="date"
                             value={uap.end}
@@ -192,33 +198,39 @@ export function WorkPackageTree({
 
       {/* Milestones */}
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold text-gray-700">Meilensteine</h2>
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Meilensteine</h2>
         {milestones.map(ms => (
-          <div key={ms.id} className="card">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl">💎</span>
+          <div key={ms.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 flex items-center justify-center">
+                <svg className="w-4 h-4 text-primary-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+              </div>
               <input
                 type="text"
                 value={ms.title}
                 onChange={e => onUpdateMilestone(ms.id, { title: e.target.value })}
-                className="input flex-1"
+                className="input flex-1 font-medium bg-white"
                 placeholder="Meilenstein Titel"
               />
               <button
                 onClick={() => confirmDelete(ms.title, () => onDeleteMilestone(ms.id))}
-                className="icon-btn text-red-600 hover:bg-red-50"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-600 transition-colors"
                 title="Löschen"
               >
-                🗑️
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
               </button>
             </div>
             <div>
-              <label className="text-xs text-gray-600 block mb-1">Datum</label>
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Datum</label>
               <input
                 type="date"
                 value={ms.date}
                 onChange={e => onUpdateMilestone(ms.id, { date: e.target.value })}
-                className="input w-full text-sm"
+                className="input w-full text-sm bg-white"
               />
             </div>
           </div>
