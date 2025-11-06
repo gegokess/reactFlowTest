@@ -21,7 +21,7 @@
 @layer components {
   /* Button styles - Modern, minimal design */
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+    @apply px-5 py-2.5 rounded-xl font-medium transition-all duration-200;
     @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
     @apply shadow-soft hover:shadow-medium;
   }
@@ -47,18 +47,18 @@
   }
 
   .btn-sm {
-    @apply px-3 py-1.5 text-sm;
+    @apply px-4 py-2 text-sm;
   }
 
   /* Icon button - Clean and subtle */
   .icon-btn {
-    @apply p-2 rounded-lg transition-all duration-200;
+    @apply p-2.5 rounded-xl transition-all duration-200;
     @apply hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
   }
 
   /* Input styles - Modern with subtle borders */
   .input {
-    @apply px-3 py-2 border border-gray-200 rounded-lg bg-white;
+    @apply px-4 py-2.5 border border-gray-200 rounded-xl bg-white;
     @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
     @apply transition-all duration-200;
     @apply placeholder:text-gray-400;

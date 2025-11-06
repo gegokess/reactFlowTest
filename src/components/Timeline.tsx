@@ -18,10 +18,11 @@ const ZOOM_CONFIG = {
   quarter: { label: 'Quartal', tickDays: 14, viewDays: 180 },
 };
 
-const ROW_HEIGHT = 60;
-const HEADER_HEIGHT = 50;
-const BAR_HEIGHT = 20;
-const SUBBAR_HEIGHT = 16;
+// Increased spacing for a more spacious, modern design
+const ROW_HEIGHT = 90;
+const HEADER_HEIGHT = 80;
+const BAR_HEIGHT = 32;
+const SUBBAR_HEIGHT = 24;
 
 export function Timeline({
   workPackages,
@@ -56,9 +57,9 @@ export function Timeline({
   const viewDays = config.viewDays;
   const tickDays = config.tickDays;
 
-  // Calculate SVG dimensions
-  const width = 1200;
-  const height = HEADER_HEIGHT + (workPackages.length * ROW_HEIGHT) + 100;
+  // Calculate SVG dimensions - wider for more spacious design
+  const width = 1800;
+  const height = HEADER_HEIGHT + (workPackages.length * ROW_HEIGHT) + 150;
 
   // Convert date to X position
   const dateToX = (date: string): number => {
@@ -171,7 +172,7 @@ export function Timeline({
       >
         {/* Header with time ticks */}
         <g>
-          <rect x="0" y="0" width={width} height={HEADER_HEIGHT} fill="#f9fafb" />
+          <rect x="0" y="0" width={width} height={HEADER_HEIGHT} fill="#fafafa" />
           {ticks.map((tick, i) => {
             const x = dateToX(tick);
             return (
@@ -181,15 +182,18 @@ export function Timeline({
                   y1="0"
                   x2={x}
                   y2={height}
-                  stroke="#e5e7eb"
-                  strokeWidth="1"
+                  stroke="#e5e5e5"
+                  strokeWidth="1.5"
+                  strokeDasharray="4 4"
+                  opacity="0.6"
                 />
                 <text
                   x={x}
-                  y={HEADER_HEIGHT - 10}
-                  fontSize="12"
-                  fill="#6b7280"
+                  y={HEADER_HEIGHT - 25}
+                  fontSize="14"
+                  fill="#525252"
                   textAnchor="middle"
+                  fontWeight="500"
                 >
                   {new Date(tick).toLocaleDateString('de-DE', {
                     day: '2-digit',
@@ -213,34 +217,38 @@ export function Timeline({
               <g>
                 <line
                   x1={apX1}
-                  y1={y + 5}
+                  y1={y + 10}
                   x2={apX1}
-                  y2={y + BAR_HEIGHT + 5}
-                  stroke="#3b82f6"
-                  strokeWidth="2"
+                  y2={y + BAR_HEIGHT + 10}
+                  stroke="#2563eb"
+                  strokeWidth="3"
+                  strokeLinecap="round"
                 />
                 <line
                   x1={apX1}
-                  y1={y + 5}
+                  y1={y + 10}
                   x2={apX2}
-                  y2={y + 5}
-                  stroke="#3b82f6"
-                  strokeWidth="2"
+                  y2={y + 10}
+                  stroke="#2563eb"
+                  strokeWidth="3"
+                  strokeLinecap="round"
                 />
                 <line
                   x1={apX2}
-                  y1={y + 5}
+                  y1={y + 10}
                   x2={apX2}
-                  y2={y + BAR_HEIGHT + 5}
-                  stroke="#3b82f6"
-                  strokeWidth="2"
+                  y2={y + BAR_HEIGHT + 10}
+                  stroke="#2563eb"
+                  strokeWidth="3"
+                  strokeLinecap="round"
                 />
                 <text
-                  x={apX1 + 5}
-                  y={y + 18}
-                  fontSize="12"
+                  x={apX1 + 10}
+                  y={y + 28}
+                  fontSize="15"
                   fill="#1e40af"
                   fontWeight="600"
+                  letterSpacing="0.3"
                 >
                   {ap.title}
                 </text>
@@ -248,7 +256,7 @@ export function Timeline({
 
               {/* UAPs */}
               {ap.subPackages.map((uap, uapIndex) => {
-                const uapY = y + 25 + uapIndex * (SUBBAR_HEIGHT + 2);
+                const uapY = y + 45 + uapIndex * (SUBBAR_HEIGHT + 6);
                 const uapX1 = dateToX(uap.start);
                 const uapX2 = dateToX(uap.end);
                 const uapWidth = uapX2 - uapX1;
@@ -259,44 +267,51 @@ export function Timeline({
                     <rect
                       x={uapX1}
                       y={uapY}
-                      width={Math.max(uapWidth, 2)}
+                      width={Math.max(uapWidth, 3)}
                       height={SUBBAR_HEIGHT}
                       fill="#60a5fa"
                       stroke="#3b82f6"
-                      strokeWidth="1"
+                      strokeWidth="1.5"
+                      rx="4"
+                      ry="4"
                       className="cursor-grab"
                       onMouseDown={e => handleMouseDown(e, 'move', ap.id, uap.id, uap.start, uap.end)}
                     />
 
                     {/* Left resize handle */}
                     <rect
-                      x={uapX1 - 3}
+                      x={uapX1 - 4}
                       y={uapY}
-                      width="6"
+                      width="8"
                       height={SUBBAR_HEIGHT}
-                      fill="#2563eb"
+                      fill="#1d4ed8"
+                      rx="2"
+                      ry="2"
                       className="cursor-ew-resize"
                       onMouseDown={e => handleMouseDown(e, 'resize-left', ap.id, uap.id, uap.start, uap.end)}
                     />
 
                     {/* Right resize handle */}
                     <rect
-                      x={uapX2 - 3}
+                      x={uapX2 - 4}
                       y={uapY}
-                      width="6"
+                      width="8"
                       height={SUBBAR_HEIGHT}
-                      fill="#2563eb"
+                      fill="#1d4ed8"
+                      rx="2"
+                      ry="2"
                       className="cursor-ew-resize"
                       onMouseDown={e => handleMouseDown(e, 'resize-right', ap.id, uap.id, uap.start, uap.end)}
                     />
 
                     {/* UAP Label */}
                     <text
-                      x={uapX1 + 5}
-                      y={uapY + SUBBAR_HEIGHT - 4}
-                      fontSize="10"
+                      x={uapX1 + 8}
+                      y={uapY + SUBBAR_HEIGHT - 6}
+                      fontSize="12"
                       fill="white"
                       fontWeight="500"
+                      letterSpacing="0.2"
                     >
                       {uap.title}
                     </text>
@@ -310,23 +325,25 @@ export function Timeline({
         {/* Milestones */}
         {milestones.map((ms, msIndex) => {
           const x = dateToX(ms.date);
-          const y = HEADER_HEIGHT + workPackages.length * ROW_HEIGHT + 20 + msIndex * 30;
+          const y = HEADER_HEIGHT + workPackages.length * ROW_HEIGHT + 40 + msIndex * 45;
 
           return (
             <g key={ms.id}>
               {/* Diamond shape */}
               <polygon
-                points={`${x},${y - 8} ${x + 8},${y} ${x},${y + 8} ${x - 8},${y}`}
-                fill="#f59e0b"
-                stroke="#d97706"
-                strokeWidth="2"
+                points={`${x},${y - 10} ${x + 10},${y} ${x},${y + 10} ${x - 10},${y}`}
+                fill="#fbbf24"
+                stroke="#f59e0b"
+                strokeWidth="2.5"
+                strokeLinejoin="round"
               />
               <text
-                x={x + 12}
-                y={y + 4}
-                fontSize="12"
+                x={x + 16}
+                y={y + 5}
+                fontSize="14"
                 fill="#92400e"
                 fontWeight="600"
+                letterSpacing="0.3"
               >
                 {ms.title}
               </text>
@@ -335,10 +352,11 @@ export function Timeline({
                 x1={x}
                 y1={HEADER_HEIGHT}
                 x2={x}
-                y2={y - 8}
-                stroke="#f59e0b"
-                strokeWidth="1"
-                strokeDasharray="4 2"
+                y2={y - 10}
+                stroke="#fbbf24"
+                strokeWidth="2"
+                strokeDasharray="6 4"
+                opacity="0.5"
               />
             </g>
           );

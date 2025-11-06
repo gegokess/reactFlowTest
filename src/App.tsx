@@ -96,27 +96,27 @@ function App() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden gap-4 p-4">
+      <div className="flex-1 flex overflow-hidden gap-6 p-6">
         {/* Left Panel: Work Package Tree */}
-        <div className="w-96 bg-white rounded-2xl shadow-soft overflow-hidden flex flex-col no-print">
-          <div className="p-6 border-b border-gray-100">
+        <div className="w-[420px] bg-white rounded-2xl shadow-soft overflow-hidden flex flex-col no-print">
+          <div className="p-8 border-b border-gray-100">
             <input
               type="text"
               value={project.name}
               onChange={e => updateProject({ name: e.target.value })}
-              className="input w-full font-semibold text-lg border-0 px-0 focus:ring-0 bg-transparent"
+              className="input w-full font-bold text-xl border-0 px-0 focus:ring-0 bg-transparent"
               placeholder="Projektname"
             />
             {project.description !== undefined && (
               <textarea
                 value={project.description}
                 onChange={e => updateProject({ description: e.target.value })}
-                className="input w-full mt-3 text-sm resize-none"
+                className="input w-full mt-4 text-sm resize-none"
                 placeholder="Beschreibung (optional)"
                 rows={2}
               />
             )}
-            <div className="mt-4 flex items-center gap-3">
+            <div className="mt-5 flex items-center gap-3">
               <input
                 type="checkbox"
                 id="clampUap"

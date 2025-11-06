@@ -8,11 +8,11 @@ export async function generatePdfFromSvg(
   svgElement: SVGSVGElement,
   filename: string
 ): Promise<void> {
-  // Convert SVG to canvas
+  // Convert SVG to canvas (high resolution)
   const canvas = await svgToCanvas(svgElement);
 
-  // Convert canvas to JPEG
-  const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+  // Convert canvas to JPEG with high quality (0.98 for near-lossless)
+  const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.98);
   const jpegData = dataUrlToBytes(jpegDataUrl);
 
   // Create PDF with embedded JPEG
@@ -23,13 +23,18 @@ export async function generatePdfFromSvg(
 }
 
 /**
- * Converts SVG element to canvas
+ * Converts SVG element to canvas with high resolution (3x scale for HD export)
  */
 async function svgToCanvas(svgElement: SVGSVGElement): Promise<HTMLCanvasElement> {
   // Get SVG dimensions
   const bbox = svgElement.getBoundingClientRect();
-  const width = bbox.width || 1200;
-  const height = bbox.height || 800;
+  const width = bbox.width || 1800;
+  const height = bbox.height || 1200;
+
+  // High-resolution scale factor (3x for crisp, high-quality export)
+  const scale = 3;
+  const scaledWidth = width * scale;
+  const scaledHeight = height * scale;
 
   // Serialize SVG to string
   const serializer = new XMLSerializer();
@@ -52,16 +57,20 @@ async function svgToCanvas(svgElement: SVGSVGElement): Promise<HTMLCanvasElement
   img.src = url;
   await loadPromise;
 
-  // Draw to canvas
+  // Draw to canvas with high resolution
   const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = scaledWidth;
+  canvas.height = scaledHeight;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Could not get canvas context');
 
+  // Enable image smoothing for better quality
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
   ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, width, height);
-  ctx.drawImage(img, 0, 0, width, height);
+  ctx.fillRect(0, 0, scaledWidth, scaledHeight);
+  ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
 
   URL.revokeObjectURL(url);
 
