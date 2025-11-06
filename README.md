@@ -11,16 +11,23 @@ Eine leichtgewichtige, clientseitige Web-App zur Erstellung und Verwaltung dynam
 - **PDF-Export**: Drucken oder Timeline als PDF exportieren (ohne externe Bibliotheken)
 - **Responsive Zoom**: Woche, Monat oder Quartal-Ansicht
 - **Lokale Persistenz**: Automatisches Speichern in localStorage
-- **Keine Backend-Abhängigkeiten**: Rein clientseitig, ideal für GitHub Pages
+- **Keine Backend-Abhängigkeiten**: Rein clientseitig
 
-## 🚀 Lokale Entwicklung
+## 🚀 Installation und Start
 
 ### Voraussetzungen
 
 - Node.js (Version 18 oder höher)
 - npm oder yarn
 
-### Installation und Start
+### Repository klonen
+
+```bash
+git clone <repository-url>
+cd reactFlowTest
+```
+
+### Installation und Entwicklungsserver
 
 ```bash
 # Dependencies installieren
@@ -46,51 +53,10 @@ Der Build-Output wird im `dist/` Verzeichnis erstellt.
 npm run preview
 ```
 
-## 📦 Deployment auf GitHub Pages
-
-### Schritt 1: Repository erstellen
-
-1. Erstellen Sie ein neues GitHub Repository
-2. Pushen Sie Ihren Code zum Repository
-
-### Schritt 2: Base-Path konfigurieren
-
-Öffnen Sie `vite.config.ts` und setzen Sie den `base` Pfad auf Ihren Repository-Namen:
-
-```typescript
-export default defineConfig({
-  plugins: [react()],
-  base: '/IHR-REPO-NAME/', // ⬅️ Hier Ihren Repository-Namen eintragen
-})
-```
-
-### Schritt 3: GitHub Pages aktivieren
-
-1. Gehen Sie zu Ihren Repository-Einstellungen
-2. Navigieren Sie zu **Settings** → **Pages**
-3. Warten Sie, bis der erste GitHub Actions Workflow durchgelaufen ist
-4. Unter **Source** sollte automatisch `gh-pages` branch / `root` ausgewählt sein
-5. Ihre App wird verfügbar sein unter: `https://IHR-USERNAME.github.io/IHR-REPO-NAME/`
-
-### GitHub Actions Workflow
-
-Der Workflow in `.github/workflows/deploy.yml` wird automatisch ausgeführt bei:
-- Push auf den `main` Branch
-- Manuellem Trigger über "Actions" → "Deploy to GitHub Pages" → "Run workflow"
-
-Der Workflow:
-1. Checkt den Code aus
-2. Installiert Dependencies (`npm ci`)
-3. Baut die App (`npm run build`)
-4. Deployed den `dist/` Ordner nach GitHub Pages
-
 ## 🏗️ Projektstruktur
 
 ```
 projekt-zeitplan/
-├── .github/
-│   └── workflows/
-│       └── deploy.yml          # GitHub Actions für Pages
 ├── src/
 │   ├── components/
 │   │   ├── Timeline.tsx        # SVG Timeline mit Drag/Resize
@@ -221,11 +187,6 @@ Alle Daten werden **ausschließlich im Browser** gespeichert:
 5. **Keine Undo/Redo**: Änderungen sind sofort persistent
 
 ## 🐛 Troubleshooting
-
-**App lädt nicht auf GitHub Pages**:
-- Prüfen Sie, ob der `base` in `vite.config.ts` korrekt gesetzt ist
-- Prüfen Sie GitHub Actions Logs auf Build-Fehler
-- Stellen Sie sicher, dass GitHub Pages aktiviert ist (Settings → Pages)
 
 **Build schlägt fehl**:
 ```bash
