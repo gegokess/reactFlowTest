@@ -76,7 +76,7 @@ export function Toolbar({
 
   return (
     <>
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-4 flex-wrap no-print">
+      <div className="bg-white/95 backdrop-blur-xl border-b border-[#d1d1d6]/30 px-6 py-4 flex items-center gap-4 flex-wrap no-print shadow-soft">
         {/* Zoom Controls */}
         <div className="flex items-center gap-3">
           <label className="text-sm font-medium text-gray-600">Ansicht</label>

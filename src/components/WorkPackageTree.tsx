@@ -57,7 +57,7 @@ export function WorkPackageTree({
           const isReadOnly = hasUaps;
 
           return (
-            <div key={ap.id} className="bg-white rounded-xl p-5 border border-gray-200 hover:border-gray-300 transition-all">
+            <div key={ap.id} className="bg-white rounded-xl p-5 border border-[#d1d1d6]/50 hover:border-[#d1d1d6] hover:shadow-soft transition-all duration-200">
               {/* AP Header */}
               <div className="flex items-center gap-3 mb-4">
                 {hasUaps && (
@@ -200,7 +200,7 @@ export function WorkPackageTree({
       <div className="space-y-4">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-5">Meilensteine</h2>
         {milestones.map(ms => (
-          <div key={ms.id} className="bg-white rounded-xl p-5 border border-gray-200 hover:border-gray-300 transition-all">
+          <div key={ms.id} className="bg-white rounded-xl p-5 border border-[#d1d1d6]/50 hover:border-[#d1d1d6] hover:shadow-soft transition-all duration-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-7 h-7 flex items-center justify-center">
                 <svg className="w-5 h-5 text-primary-600" fill="currentColor" viewBox="0 0 24 24">

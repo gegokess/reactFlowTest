@@ -18,11 +18,13 @@ const ZOOM_CONFIG = {
   quarter: { label: 'Quartal', tickDays: 14, viewDays: 180 },
 };
 
-// Increased spacing for a more spacious, modern design
-const ROW_HEIGHT = 90;
+// Apple-inspired spacing - precise and generous
+const BASE_ROW_HEIGHT = 60; // Base height for AP
 const HEADER_HEIGHT = 80;
 const BAR_HEIGHT = 32;
 const SUBBAR_HEIGHT = 24;
+const UAP_SPACING = 8; // Spacing between UAPs (Apple-style)
+const ROW_PADDING = 30; // Padding at bottom of each row
 
 export function Timeline({
   workPackages,
@@ -57,9 +59,29 @@ export function Timeline({
   const viewDays = config.viewDays;
   const tickDays = config.tickDays;
 
+  // Calculate dynamic row heights based on UAP count (Apple-style precise spacing)
+  const getRowHeight = (wp: WorkPackage) => {
+    const uapCount = wp.subPackages.length;
+    if (uapCount === 0) return BASE_ROW_HEIGHT;
+    return BASE_ROW_HEIGHT + (uapCount * (SUBBAR_HEIGHT + UAP_SPACING)) + ROW_PADDING;
+  };
+
+  // Calculate cumulative Y positions for each work package
+  const rowPositions = workPackages.reduce((acc, wp, index) => {
+    const prevY = index === 0 ? HEADER_HEIGHT : acc[index - 1].y + acc[index - 1].height;
+    acc.push({
+      y: prevY,
+      height: getRowHeight(wp),
+    });
+    return acc;
+  }, [] as { y: number; height: number }[]);
+
   // Calculate SVG dimensions - wider for more spacious design
   const width = 1800;
-  const height = HEADER_HEIGHT + (workPackages.length * ROW_HEIGHT) + 150;
+  const totalRowsHeight = rowPositions.length > 0
+    ? rowPositions[rowPositions.length - 1].y + rowPositions[rowPositions.length - 1].height
+    : HEADER_HEIGHT;
+  const height = totalRowsHeight + 150; // Extra space for milestones
 
   // Convert date to X position
   const dateToX = (date: string): number => {
@@ -170,39 +192,59 @@ export function Timeline({
         className="border border-gray-200"
         data-timeline-svg="true"
       >
-        {/* Gradient definitions for modern visual effects */}
+        {/* Apple-inspired gradient definitions */}
         <defs>
-          <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#ffffff', stopOpacity: 1 }} />
+          {/* Glass gloss effect for AP containers */}
+          <linearGradient id="appleGloss" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style={{ stopColor: '#ffffff', stopOpacity: 0.8 }} />
+            <stop offset="50%" style={{ stopColor: '#ffffff', stopOpacity: 0.2 }} />
             <stop offset="100%" style={{ stopColor: '#ffffff', stopOpacity: 0 }} />
           </linearGradient>
+          {/* UAP gradient for subtle depth */}
+          <linearGradient id="uapGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style={{ stopColor: '#ffffff', stopOpacity: 0.25 }} />
+            <stop offset="100%" style={{ stopColor: '#000000', stopOpacity: 0.05 }} />
+          </linearGradient>
+          {/* Soft shadow for elevation */}
+          <filter id="appleShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+            <feOffset dx="0" dy="2" result="offsetblur"/>
+            <feComponentTransfer>
+              <feFuncA type="linear" slope="0.15"/>
+            </feComponentTransfer>
+            <feMerge>
+              <feMergeNode/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
         </defs>
 
-        {/* Header with time ticks - Modern minimal design */}
+        {/* Header with time ticks - Apple-inspired */}
         <g>
-          <rect x="0" y="0" width={width} height={HEADER_HEIGHT} fill="#ffffff" />
-          <line x1="0" y1={HEADER_HEIGHT} x2={width} y2={HEADER_HEIGHT} stroke="#e5e7eb" strokeWidth="2" />
+          <rect x="0" y="0" width={width} height={HEADER_HEIGHT} fill="#fafafa" />
+          <line x1="0" y1={HEADER_HEIGHT} x2={width} y2={HEADER_HEIGHT} stroke="#d1d1d6" strokeWidth="0.5" />
           {ticks.map((tick, i) => {
             const x = dateToX(tick);
             return (
               <g key={i}>
                 <line
                   x1={x}
-                  y1="0"
+                  y1={HEADER_HEIGHT}
                   x2={x}
                   y2={height}
-                  stroke="#f3f4f6"
-                  strokeWidth="1"
-                  opacity="0.8"
+                  stroke="#e5e5e7"
+                  strokeWidth="0.5"
+                  opacity="0.6"
                 />
                 <text
                   x={x}
-                  y={HEADER_HEIGHT - 30}
+                  y={HEADER_HEIGHT - 32}
                   fontSize="13"
-                  fill="#6b7280"
+                  fill="#86868b"
                   textAnchor="middle"
-                  fontWeight="500"
-                  letterSpacing="0.5"
+                  fontWeight="600"
+                  letterSpacing="-0.1"
+                  style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif' }}
                 >
                   {new Date(tick).toLocaleDateString('de-DE', {
                     day: '2-digit',
@@ -216,130 +258,154 @@ export function Timeline({
 
         {/* Work Packages and UAPs */}
         {workPackages.map((ap, apIndex) => {
-          const y = HEADER_HEIGHT + apIndex * ROW_HEIGHT;
+          const y = rowPositions[apIndex].y;
           const apX1 = dateToX(ap.start);
           const apX2 = dateToX(ap.end);
 
           return (
             <g key={ap.id}>
-              {/* AP Container - Modern minimal design */}
+              {/* AP Container - Apple-inspired glass material */}
               <g>
-                {/* Background bar for AP */}
+                {/* Background bar with Apple-style glass effect */}
                 <rect
                   x={apX1}
                   y={y + 5}
                   width={apX2 - apX1}
                   height={BAR_HEIGHT + 5}
-                  fill="#f8fafc"
-                  stroke="#e2e8f0"
-                  strokeWidth="1"
-                  rx="6"
-                  ry="6"
+                  fill="#f5f5f7"
+                  stroke="none"
+                  rx="8"
+                  ry="8"
+                  opacity="0.6"
+                />
+                {/* Subtle overlay for depth */}
+                <rect
+                  x={apX1}
+                  y={y + 5}
+                  width={apX2 - apX1}
+                  height={(BAR_HEIGHT + 5) / 2}
+                  fill="url(#appleGloss)"
+                  stroke="none"
+                  rx="8"
+                  ry="8"
+                  opacity="0.5"
+                />
+                {/* Border with subtle color */}
+                <rect
+                  x={apX1}
+                  y={y + 5}
+                  width={apX2 - apX1}
+                  height={BAR_HEIGHT + 5}
+                  fill="none"
+                  stroke="#d1d1d6"
+                  strokeWidth="0.5"
+                  rx="8"
+                  ry="8"
                   opacity="0.8"
                 />
-                {/* AP Title with modern typography */}
+                {/* AP Title with SF-inspired typography */}
                 <text
-                  x={apX1 + 12}
-                  y={y + 26}
-                  fontSize="14"
-                  fill="#334155"
+                  x={apX1 + 14}
+                  y={y + 27}
+                  fontSize="15"
+                  fill="#1d1d1f"
                   fontWeight="600"
-                  letterSpacing="0.2"
+                  letterSpacing="-0.3"
+                  style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif' }}
                 >
                   {ap.title}
                 </text>
-                {/* Subtle start indicator */}
+                {/* Accent indicator with Apple blue */}
                 <rect
                   x={apX1}
                   y={y + 5}
                   width="3"
                   height={BAR_HEIGHT + 5}
-                  fill="#3b82f6"
-                  rx="2"
-                  ry="2"
+                  fill="#007aff"
+                  rx="1.5"
+                  ry="1.5"
                 />
               </g>
 
-              {/* UAPs - Modern flat design */}
+              {/* UAPs - Apple-inspired design */}
               {ap.subPackages.map((uap, uapIndex) => {
-                const uapY = y + 45 + uapIndex * (SUBBAR_HEIGHT + 6);
+                const uapY = y + 45 + uapIndex * (SUBBAR_HEIGHT + UAP_SPACING);
                 const uapX1 = dateToX(uap.start);
                 const uapX2 = dateToX(uap.end);
                 const uapWidth = uapX2 - uapX1;
 
                 return (
-                  <g key={uap.id}>
-                    {/* UAP Bar - Modern minimal style */}
+                  <g key={uap.id} filter="url(#appleShadow)">
+                    {/* UAP Bar - Apple blue with subtle gradient */}
                     <rect
                       x={uapX1}
                       y={uapY}
                       width={Math.max(uapWidth, 3)}
                       height={SUBBAR_HEIGHT}
-                      fill="#3b82f6"
+                      fill="#007aff"
                       stroke="none"
-                      rx="6"
-                      ry="6"
-                      opacity="0.95"
+                      rx="7"
+                      ry="7"
                       className="cursor-grab"
                       onMouseDown={e => handleMouseDown(e, 'move', ap.id, uap.id, uap.start, uap.end)}
                     />
 
-                    {/* Subtle progress indicator (optional visual enhancement) */}
+                    {/* Glass overlay for depth */}
                     <rect
                       x={uapX1}
                       y={uapY}
                       width={Math.max(uapWidth, 3)}
                       height={SUBBAR_HEIGHT}
-                      fill="url(#gradient)"
+                      fill="url(#uapGradient)"
                       stroke="none"
-                      rx="6"
-                      ry="6"
-                      opacity="0.15"
+                      rx="7"
+                      ry="7"
                       pointerEvents="none"
                     />
 
-                    {/* Left resize handle - minimalist */}
+                    {/* Left resize handle - Apple subtle design */}
                     <rect
                       x={uapX1 - 2}
-                      y={uapY + 4}
-                      width="4"
-                      height={SUBBAR_HEIGHT - 8}
-                      fill="#1e40af"
-                      rx="2"
-                      ry="2"
+                      y={uapY + 5}
+                      width="3"
+                      height={SUBBAR_HEIGHT - 10}
+                      fill="#ffffff"
+                      rx="1.5"
+                      ry="1.5"
                       opacity="0"
                       className="cursor-ew-resize"
-                      style={{ transition: 'opacity 0.2s' }}
-                      onMouseOver={(e) => e.currentTarget.setAttribute('opacity', '1')}
+                      style={{ transition: 'opacity 0.25s ease' }}
+                      onMouseOver={(e) => e.currentTarget.setAttribute('opacity', '0.9')}
                       onMouseOut={(e) => e.currentTarget.setAttribute('opacity', '0')}
                       onMouseDown={e => handleMouseDown(e, 'resize-left', ap.id, uap.id, uap.start, uap.end)}
                     />
 
-                    {/* Right resize handle - minimalist */}
+                    {/* Right resize handle - Apple subtle design */}
                     <rect
-                      x={uapX2 - 2}
-                      y={uapY + 4}
-                      width="4"
-                      height={SUBBAR_HEIGHT - 8}
-                      fill="#1e40af"
-                      rx="2"
-                      ry="2"
+                      x={uapX2 - 1}
+                      y={uapY + 5}
+                      width="3"
+                      height={SUBBAR_HEIGHT - 10}
+                      fill="#ffffff"
+                      rx="1.5"
+                      ry="1.5"
                       opacity="0"
                       className="cursor-ew-resize"
-                      style={{ transition: 'opacity 0.2s' }}
-                      onMouseOver={(e) => e.currentTarget.setAttribute('opacity', '1')}
+                      style={{ transition: 'opacity 0.25s ease' }}
+                      onMouseOver={(e) => e.currentTarget.setAttribute('opacity', '0.9')}
                       onMouseOut={(e) => e.currentTarget.setAttribute('opacity', '0')}
                       onMouseDown={e => handleMouseDown(e, 'resize-right', ap.id, uap.id, uap.start, uap.end)}
                     />
 
-                    {/* UAP Label - Modern typography */}
+                    {/* UAP Label - SF-inspired typography */}
                     <text
-                      x={uapX1 + 10}
+                      x={uapX1 + 12}
                       y={uapY + SUBBAR_HEIGHT / 2 + 5}
-                      fontSize="12"
+                      fontSize="13"
                       fill="#ffffff"
-                      fontWeight="500"
-                      letterSpacing="0.3"
+                      fontWeight="600"
+                      letterSpacing="-0.2"
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif' }}
                     >
                       {uap.title}
                     </text>
@@ -350,52 +416,71 @@ export function Timeline({
           );
         })}
 
-        {/* Milestones - Modern minimal design */}
+        {/* Milestones - Apple-inspired design */}
         {milestones.map((ms, msIndex) => {
           const x = dateToX(ms.date);
-          const y = HEADER_HEIGHT + workPackages.length * ROW_HEIGHT + 40 + msIndex * 45;
+          const y = totalRowsHeight + 40 + msIndex * 45;
 
           return (
             <g key={ms.id}>
-              {/* Vertical indicator line - clean and subtle */}
+              {/* Vertical indicator line - Apple subtle */}
               <line
                 x1={x}
                 y1={HEADER_HEIGHT}
                 x2={x}
-                y2={y - 12}
-                stroke="#f59e0b"
-                strokeWidth="2"
-                strokeDasharray="4 6"
-                opacity="0.4"
+                y2={y - 14}
+                stroke="#ff9500"
+                strokeWidth="1.5"
+                strokeDasharray="3 5"
+                opacity="0.3"
               />
 
-              {/* Modern milestone marker - simple circle */}
-              <circle
-                cx={x}
-                cy={y}
-                r="8"
-                fill="#f59e0b"
-                stroke="#ffffff"
-                strokeWidth="2"
-              />
+              {/* Milestone marker with Apple orange and shadow */}
+              <g filter="url(#appleShadow)">
+                <circle
+                  cx={x}
+                  cy={y}
+                  r="9"
+                  fill="#ff9500"
+                  stroke="none"
+                />
+                {/* Glass highlight */}
+                <circle
+                  cx={x}
+                  cy={y - 1}
+                  r="9"
+                  fill="url(#appleGloss)"
+                  stroke="none"
+                  opacity="0.4"
+                />
+                {/* Border */}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r="9"
+                  fill="none"
+                  stroke="rgba(255, 255, 255, 0.3)"
+                  strokeWidth="1.5"
+                />
+                {/* Inner indicator */}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r="3"
+                  fill="#ffffff"
+                  opacity="0.95"
+                />
+              </g>
 
-              {/* Inner dot for depth */}
-              <circle
-                cx={x}
-                cy={y}
-                r="3"
-                fill="#ffffff"
-                opacity="0.9"
-              />
-
-              {/* Milestone label with modern typography */}
+              {/* Milestone label with SF typography */}
               <text
-                x={x + 16}
+                x={x + 18}
                 y={y + 5}
-                fontSize="13"
-                fill="#78716c"
+                fontSize="14"
+                fill="#1d1d1f"
                 fontWeight="600"
-                letterSpacing="0.3"
+                letterSpacing="-0.2"
+                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif' }}
               >
                 {ms.title}
               </text>

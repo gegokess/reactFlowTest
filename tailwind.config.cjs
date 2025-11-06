@@ -33,12 +33,12 @@ module.exports = {
         }
       },
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Arial', 'sans-serif'],
       },
       boxShadow: {
-        'soft': '0 1px 3px rgba(0, 0, 0, 0.03)',
-        'medium': '0 2px 8px rgba(0, 0, 0, 0.05)',
-        'strong': '0 4px 16px rgba(0, 0, 0, 0.08)',
+        'soft': '0 1px 3px rgba(0, 0, 0, 0.04), 0 0 1px rgba(0, 0, 0, 0.02)',
+        'medium': '0 4px 12px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.04)',
+        'strong': '0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06)',
       },
       borderRadius: {
         'xl': '0.75rem',
