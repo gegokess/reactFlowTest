@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { WorkPackage, SubPackage, Milestone, ZoomLevel } from '../types';
-import { toIso, addDays, daysBetween } from '../utils/dateUtils';
+import { toIso, addDays, daysBetween, parseIso } from '../utils/dateUtils';
 
 interface TimelineProps {
   workPackages: WorkPackage[];
@@ -55,6 +55,12 @@ export function Timeline({
     initialX: number;
     initialStart: string;
     initialEnd: string;
+  } | null>(null);
+
+  const [tooltip, setTooltip] = useState<{
+    x: number;
+    y: number;
+    content: string;
   } | null>(null);
 
   const config = ZOOM_CONFIG[zoomLevel];
@@ -184,69 +190,85 @@ export function Timeline({
 
   return (
     <div
-      className="h-full overflow-auto bg-white"
+      className="h-full overflow-auto relative"
+      style={{ backgroundColor: '#FFFFFF' }}
       onDrop={onDrop}
       onDragOver={e => e.preventDefault()}
     >
+      {/* Tooltip */}
+      {tooltip && (
+        <div
+          style={{
+            position: 'fixed',
+            left: tooltip.x,
+            top: tooltip.y,
+            transform: 'translate(-50%, -100%)',
+            pointerEvents: 'none',
+            zIndex: 1000,
+          }}
+          className="px-3 py-2 rounded-lg text-xs font-medium text-white whitespace-pre-line"
+        >
+          <div
+            style={{
+              backgroundColor: '#16232A',
+              padding: '8px 12px',
+              borderRadius: '6px',
+              boxShadow: '0 4px 12px rgba(22, 35, 42, 0.2)',
+              fontFamily: 'Inter, "Source Sans 3", -apple-system, BlinkMacSystemFont, sans-serif',
+              letterSpacing: '-0.2px',
+            }}
+          >
+            {tooltip.content}
+          </div>
+        </div>
+      )}
+
       <svg
         ref={svgRef}
         width={width}
         height={height}
-        className="border border-gray-200"
+        style={{ backgroundColor: '#FFFFFF' }}
         data-timeline-svg="true"
       >
-        {/* Sophisticated gradient and filter definitions */}
+        {/* Modern gradient and filter definitions with new color palette */}
         <defs>
-          {/* Vibrant purple gradient for AP containers */}
-          <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style={{ stopColor: '#8B5CF6', stopOpacity: 0.15 }} />
-            <stop offset="100%" style={{ stopColor: '#A855F7', stopOpacity: 0.08 }} />
+          {/* Deep Sea Green gradient for AP containers - subtle and professional */}
+          <linearGradient id="apGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style={{ stopColor: '#075056', stopOpacity: 0.08 }} />
+            <stop offset="100%" style={{ stopColor: '#075056', stopOpacity: 0.04 }} />
           </linearGradient>
 
-          {/* Teal gradient for UAPs */}
-          <linearGradient id="tealGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#06B6D4', stopOpacity: 1 }} />
-            <stop offset="100%" style={{ stopColor: '#0891B2', stopOpacity: 1 }} />
+          {/* Deep Sea Green gradient for UAP bars - vibrant but not overwhelming */}
+          <linearGradient id="uapGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style={{ stopColor: '#075056', stopOpacity: 0.85 }} />
+            <stop offset="100%" style={{ stopColor: '#064045', stopOpacity: 0.75 }} />
           </linearGradient>
 
-          {/* Coral gradient for highlights */}
-          <linearGradient id="coralGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#FB923C', stopOpacity: 1 }} />
-            <stop offset="100%" style={{ stopColor: '#F97316', stopOpacity: 1 }} />
+          {/* Blaze Orange gradient for active/critical elements */}
+          <linearGradient id="blazeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style={{ stopColor: '#FF5B04', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: '#CC4903', stopOpacity: 1 }} />
           </linearGradient>
 
-          {/* Emerald gradient for success states */}
-          <linearGradient id="emeraldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#10B981', stopOpacity: 1 }} />
-            <stop offset="100%" style={{ stopColor: '#059669', stopOpacity: 1 }} />
+          {/* Current week highlight - soft Blaze Orange */}
+          <linearGradient id="currentWeekGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style={{ stopColor: '#FF5B04', stopOpacity: 0.04 }} />
+            <stop offset="100%" style={{ stopColor: '#FF5B04', stopOpacity: 0.02 }} />
           </linearGradient>
 
-          {/* Shimmer effect overlay */}
+          {/* Subtle shimmer effect */}
           <linearGradient id="shimmer" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#ffffff', stopOpacity: 0.4 }} />
-            <stop offset="50%" style={{ stopColor: '#ffffff', stopOpacity: 0.1 }} />
+            <stop offset="0%" style={{ stopColor: '#ffffff', stopOpacity: 0.25 }} />
+            <stop offset="50%" style={{ stopColor: '#ffffff', stopOpacity: 0.05 }} />
             <stop offset="100%" style={{ stopColor: '#ffffff', stopOpacity: 0 }} />
           </linearGradient>
 
-          {/* Sophisticated multi-layer shadow */}
-          <filter id="complexShadow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
-            <feOffset dx="0" dy="3" result="offsetblur"/>
-            <feComponentTransfer>
-              <feFuncA type="linear" slope="0.2"/>
-            </feComponentTransfer>
-            <feMerge>
-              <feMergeNode/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-
-          {/* Subtle glow effect */}
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          {/* Soft shadow - y-offset 2px, low opacity */}
+          <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
-            <feOffset dx="0" dy="0" result="offsetblur"/>
+            <feOffset dx="0" dy="2" result="offsetblur"/>
             <feComponentTransfer>
-              <feFuncA type="linear" slope="0.3"/>
+              <feFuncA type="linear" slope="0.1"/>
             </feComponentTransfer>
             <feMerge>
               <feMergeNode/>
@@ -254,31 +276,38 @@ export function Timeline({
             </feMerge>
           </filter>
 
-          {/* Diagonal stripe pattern for AP background */}
-          <pattern id="stripePattern" patternUnits="userSpaceOnUse" width="20" height="20" patternTransform="rotate(45)">
-            <line x1="0" y1="0" x2="0" y2="20" stroke="#8B5CF6" strokeWidth="0.5" opacity="0.08"/>
-          </pattern>
+          {/* Minimal glow for hover states */}
+          <filter id="minimalGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="1.5"/>
+            <feOffset dx="0" dy="1" result="offsetblur"/>
+            <feComponentTransfer>
+              <feFuncA type="linear" slope="0.15"/>
+            </feComponentTransfer>
+            <feMerge>
+              <feMergeNode/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
         </defs>
 
-        {/* Header with sophisticated design */}
+        {/* Header with clean, modern design */}
         <g>
-          {/* Background with subtle gradient */}
-          <rect x="0" y="0" width={width} height={HEADER_HEIGHT} fill="#FAFAF9" />
-          <rect x="0" y="0" width={width} height={HEADER_HEIGHT} fill="url(#purpleGradient)" opacity="0.4" />
+          {/* Background - Wild Sand */}
+          <rect x="0" y="0" width={width} height={HEADER_HEIGHT} fill="#E4EEF0" />
 
-          {/* Bottom border with gradient */}
-          <line x1="0" y1={HEADER_HEIGHT} x2={width} y2={HEADER_HEIGHT} stroke="#8B5CF6" strokeWidth="2" opacity="0.2" />
+          {/* Bottom border - Mirage with low opacity */}
+          <line x1="0" y1={HEADER_HEIGHT} x2={width} y2={HEADER_HEIGHT} stroke="#16232A" strokeWidth="1.5" opacity="0.15" />
 
-          {/* Time scale indicator line */}
+          {/* Time scale indicator line - Deep Sea Green */}
           <line
             x1={TIMELINE_PADDING_LEFT}
             y1={HEADER_HEIGHT - 15}
             x2={width - TIMELINE_PADDING_RIGHT}
             y2={HEADER_HEIGHT - 15}
-            stroke="#8B5CF6"
-            strokeWidth="3"
+            stroke="#075056"
+            strokeWidth="2"
             strokeLinecap="round"
-            opacity="0.3"
+            opacity="0.25"
           />
 
           {ticks.map((tick, i) => {
@@ -286,39 +315,57 @@ export function Timeline({
             const isFirst = i === 0;
             const isLast = i === ticks.length - 1;
 
+            // Check if this is the current week
+            const today = new Date();
+            const tickDate = parseIso(tick);
+            const nextTick = i < ticks.length - 1 ? parseIso(ticks[i + 1]) : null;
+            const isCurrentWeek = tickDate <= today && (nextTick ? today < nextTick : true);
+
             return (
               <g key={i}>
-                {/* Vertical grid line */}
+                {/* Current week highlight with soft Blaze Orange */}
+                {isCurrentWeek && nextTick && (
+                  <rect
+                    x={x}
+                    y={HEADER_HEIGHT}
+                    width={dateToX(ticks[i + 1]) - x}
+                    height={height - HEADER_HEIGHT}
+                    fill="url(#currentWeekGradient)"
+                    pointerEvents="none"
+                  />
+                )}
+
+                {/* Vertical grid line - subtle and clean */}
                 <line
                   x1={x}
                   y1={HEADER_HEIGHT}
                   x2={x}
                   y2={height}
-                  stroke="#E5E5E5"
+                  stroke="#16232A"
                   strokeWidth="1"
-                  strokeDasharray="6 6"
-                  opacity="0.4"
+                  strokeDasharray="4 4"
+                  opacity={isCurrentWeek ? "0.12" : "0.06"}
                 />
 
                 {/* Tick marker on timeline */}
                 <circle
                   cx={x}
                   cy={HEADER_HEIGHT - 15}
-                  r="4"
-                  fill="#8B5CF6"
-                  opacity={isFirst || isLast ? "1" : "0.5"}
+                  r="3"
+                  fill={isCurrentWeek ? "#FF5B04" : "#075056"}
+                  opacity={isFirst || isLast || isCurrentWeek ? "0.9" : "0.4"}
                 />
 
-                {/* Date label */}
+                {/* Date label with Inter/Source Sans font */}
                 <text
                   x={x}
                   y={HEADER_HEIGHT - 35}
-                  fontSize="13"
-                  fill="#52525B"
+                  fontSize="12"
+                  fill={isCurrentWeek ? "#FF5B04" : "#16232A"}
                   textAnchor="middle"
-                  fontWeight="600"
-                  letterSpacing="-0.2"
-                  style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif' }}
+                  fontWeight={isCurrentWeek ? "700" : "500"}
+                  letterSpacing="-0.3"
+                  style={{ fontFamily: 'Inter, "Source Sans 3", -apple-system, BlinkMacSystemFont, sans-serif' }}
                 >
                   {new Date(tick).toLocaleDateString('de-DE', {
                     day: '2-digit',
@@ -338,46 +385,33 @@ export function Timeline({
 
           return (
             <g key={ap.id}>
-              {/* AP Container - Sophisticated multi-layer design */}
-              <g filter="url(#complexShadow)">
-                {/* Base container with rounded corners */}
+              {/* AP Container - Clean, modern design */}
+              <g filter="url(#softShadow)">
+                {/* Base container - Wild Sand background */}
                 <rect
                   x={apX1}
                   y={y + 8}
                   width={apX2 - apX1}
                   height={BAR_HEIGHT}
-                  fill="#FFFFFF"
+                  fill="#E4EEF0"
                   stroke="none"
-                  rx="10"
-                  ry="10"
+                  rx="6"
+                  ry="6"
                 />
 
-                {/* Stripe pattern background */}
+                {/* Subtle gradient overlay - Deep Sea Green */}
                 <rect
                   x={apX1}
                   y={y + 8}
                   width={apX2 - apX1}
                   height={BAR_HEIGHT}
-                  fill="url(#stripePattern)"
+                  fill="url(#apGradient)"
                   stroke="none"
-                  rx="10"
-                  ry="10"
+                  rx="6"
+                  ry="6"
                 />
 
-                {/* Gradient overlay */}
-                <rect
-                  x={apX1}
-                  y={y + 8}
-                  width={apX2 - apX1}
-                  height={BAR_HEIGHT}
-                  fill="url(#purpleGradient)"
-                  stroke="none"
-                  rx="10"
-                  ry="10"
-                  opacity="0.6"
-                />
-
-                {/* Shimmer effect on top */}
+                {/* Shimmer effect - subtle */}
                 <rect
                   x={apX1}
                   y={y + 8}
@@ -385,82 +419,86 @@ export function Timeline({
                   height={BAR_HEIGHT / 2}
                   fill="url(#shimmer)"
                   stroke="none"
-                  rx="10"
-                  ry="10"
+                  rx="6"
+                  ry="6"
                   pointerEvents="none"
                 />
 
-                {/* Border with gradient */}
+                {/* Border - Deep Sea Green with low opacity */}
                 <rect
                   x={apX1}
                   y={y + 8}
                   width={apX2 - apX1}
                   height={BAR_HEIGHT}
                   fill="none"
-                  stroke="#8B5CF6"
-                  strokeWidth="1.5"
-                  rx="10"
-                  ry="10"
-                  opacity="0.3"
+                  stroke="#075056"
+                  strokeWidth="1"
+                  rx="6"
+                  ry="6"
+                  opacity="0.2"
                 />
 
-                {/* Left accent bar - vibrant purple */}
+                {/* Left accent bar - Deep Sea Green */}
                 <rect
                   x={apX1}
                   y={y + 8}
-                  width="5"
+                  width="4"
                   height={BAR_HEIGHT}
-                  fill="#8B5CF6"
-                  rx="10"
-                  ry="10"
-                />
-
-                {/* Right accent indicator */}
-                <circle
-                  cx={apX2 - 12}
-                  cy={y + 8 + BAR_HEIGHT / 2}
-                  r="5"
-                  fill="#A855F7"
+                  fill="#075056"
+                  rx="6"
+                  ry="6"
                   opacity="0.6"
                 />
               </g>
 
-              {/* AP Title with modern typography */}
+              {/* AP Title - Mirage text, Inter font */}
               <text
-                x={apX1 + 18}
-                y={y + 8 + BAR_HEIGHT / 2 + 6}
-                fontSize="15"
-                fill="#18181B"
+                x={apX1 + 16}
+                y={y + 8 + BAR_HEIGHT / 2 + 5}
+                fontSize="14"
+                fill="#16232A"
                 fontWeight="700"
-                letterSpacing="-0.4"
-                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif' }}
+                letterSpacing="-0.3"
+                style={{ fontFamily: 'Inter, "Source Sans 3", -apple-system, BlinkMacSystemFont, sans-serif' }}
               >
                 {ap.title}
               </text>
 
-              {/* UAPs - Sophisticated vibrant design */}
+              {/* UAPs - Clean, modern design with Deep Sea Green */}
               {ap.subPackages.map((uap, uapIndex) => {
                 const uapY = y + 50 + uapIndex * (SUBBAR_HEIGHT + UAP_SPACING);
                 const uapX1 = dateToX(uap.start);
                 const uapX2 = dateToX(uap.end);
                 const uapWidth = uapX2 - uapX1;
 
+                // Calculate progress (mock for now - could be from data)
+                const progress = 0.6; // 60% progress
+
                 return (
                   <g key={uap.id}>
-                    {/* UAP Bar with multiple visual layers */}
-                    <g filter="url(#glow)">
-                      {/* Base bar with gradient */}
+                    {/* UAP Bar - main container */}
+                    <g filter="url(#softShadow)">
+                      {/* Base bar - Deep Sea Green */}
                       <rect
                         x={uapX1}
                         y={uapY}
                         width={Math.max(uapWidth, 5)}
                         height={SUBBAR_HEIGHT}
-                        fill="url(#tealGradient)"
+                        fill="#075056"
                         stroke="none"
-                        rx="8"
-                        ry="8"
+                        rx="6"
+                        ry="6"
                         className="cursor-grab"
                         onMouseDown={e => handleMouseDown(e, 'move', ap.id, uap.id, uap.start, uap.end)}
+                        onMouseEnter={e => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setTooltip({
+                            x: rect.left + rect.width / 2,
+                            y: rect.top - 10,
+                            content: `${uap.title}\n${new Date(uap.start).toLocaleDateString('de-DE')} - ${new Date(uap.end).toLocaleDateString('de-DE')}\nFortschritt: ${Math.round(progress * 100)}%`
+                          });
+                        }}
+                        onMouseLeave={() => setTooltip(null)}
                       />
 
                       {/* Shimmer overlay */}
@@ -471,12 +509,12 @@ export function Timeline({
                         height={SUBBAR_HEIGHT / 2}
                         fill="url(#shimmer)"
                         stroke="none"
-                        rx="8"
-                        ry="8"
+                        rx="6"
+                        ry="6"
                         pointerEvents="none"
                       />
 
-                      {/* Border highlight */}
+                      {/* Border - subtle white highlight */}
                       <rect
                         x={uapX1}
                         y={uapY}
@@ -485,99 +523,92 @@ export function Timeline({
                         fill="none"
                         stroke="#FFFFFF"
                         strokeWidth="1"
-                        rx="8"
-                        ry="8"
-                        opacity="0.3"
+                        rx="6"
+                        ry="6"
+                        opacity="0.2"
                         pointerEvents="none"
                       />
                     </g>
 
-                    {/* Progress indicator bar (left side) */}
+                    {/* Progress indicator bar - Blaze Orange overlay */}
                     <rect
                       x={uapX1}
-                      y={uapY}
-                      width="4"
-                      height={SUBBAR_HEIGHT}
-                      fill="#10B981"
-                      rx="8"
-                      ry="8"
-                      opacity="0.8"
+                      y={uapY + SUBBAR_HEIGHT - 3}
+                      width={Math.max(uapWidth, 5) * progress}
+                      height="3"
+                      fill="#FF5B04"
+                      rx="2"
+                      ry="2"
+                      opacity="0.9"
+                      pointerEvents="none"
                     />
 
-                    {/* Sophisticated resize handles with visual feedback */}
+                    {/* Clean resize handles - minimal hover effect */}
                     {/* Left resize handle */}
-                    <g opacity="0" style={{ transition: 'opacity 0.3s ease' }} onMouseOver={(e) => e.currentTarget.setAttribute('opacity', '1')} onMouseOut={(e) => e.currentTarget.setAttribute('opacity', '0')}>
+                    <g opacity="0" style={{ transition: 'opacity 0.2s ease' }} onMouseOver={(e) => e.currentTarget.setAttribute('opacity', '1')} onMouseOut={(e) => e.currentTarget.setAttribute('opacity', '0')}>
                       <rect
-                        x={uapX1 - 4}
+                        x={uapX1 - 3}
                         y={uapY + 6}
-                        width="8"
+                        width="6"
                         height={SUBBAR_HEIGHT - 12}
                         fill="#FFFFFF"
-                        rx="3"
-                        ry="3"
+                        rx="2"
+                        ry="2"
                         className="cursor-ew-resize"
                         onMouseDown={e => handleMouseDown(e, 'resize-left', ap.id, uap.id, uap.start, uap.end)}
                       />
                       <rect
-                        x={uapX1 - 3}
+                        x={uapX1 - 2}
                         y={uapY + 7}
-                        width="6"
+                        width="4"
                         height={SUBBAR_HEIGHT - 14}
-                        fill="#06B6D4"
-                        rx="2"
-                        ry="2"
+                        fill="#FF5B04"
+                        rx="1"
+                        ry="1"
                         className="cursor-ew-resize"
                         onMouseDown={e => handleMouseDown(e, 'resize-left', ap.id, uap.id, uap.start, uap.end)}
                       />
                     </g>
 
                     {/* Right resize handle */}
-                    <g opacity="0" style={{ transition: 'opacity 0.3s ease' }} onMouseOver={(e) => e.currentTarget.setAttribute('opacity', '1')} onMouseOut={(e) => e.currentTarget.setAttribute('opacity', '0')}>
-                      <rect
-                        x={uapX2 - 4}
-                        y={uapY + 6}
-                        width="8"
-                        height={SUBBAR_HEIGHT - 12}
-                        fill="#FFFFFF"
-                        rx="3"
-                        ry="3"
-                        className="cursor-ew-resize"
-                        onMouseDown={e => handleMouseDown(e, 'resize-right', ap.id, uap.id, uap.start, uap.end)}
-                      />
+                    <g opacity="0" style={{ transition: 'opacity 0.2s ease' }} onMouseOver={(e) => e.currentTarget.setAttribute('opacity', '1')} onMouseOut={(e) => e.currentTarget.setAttribute('opacity', '0')}>
                       <rect
                         x={uapX2 - 3}
-                        y={uapY + 7}
+                        y={uapY + 6}
                         width="6"
-                        height={SUBBAR_HEIGHT - 14}
-                        fill="#06B6D4"
+                        height={SUBBAR_HEIGHT - 12}
+                        fill="#FFFFFF"
                         rx="2"
                         ry="2"
                         className="cursor-ew-resize"
                         onMouseDown={e => handleMouseDown(e, 'resize-right', ap.id, uap.id, uap.start, uap.end)}
                       />
+                      <rect
+                        x={uapX2 - 2}
+                        y={uapY + 7}
+                        width="4"
+                        height={SUBBAR_HEIGHT - 14}
+                        fill="#FF5B04"
+                        rx="1"
+                        ry="1"
+                        className="cursor-ew-resize"
+                        onMouseDown={e => handleMouseDown(e, 'resize-right', ap.id, uap.id, uap.start, uap.end)}
+                      />
                     </g>
 
-                    {/* UAP Label with modern typography */}
+                    {/* UAP Label - Inter font, white text */}
                     <text
-                      x={uapX1 + 14}
-                      y={uapY + SUBBAR_HEIGHT / 2 + 6}
-                      fontSize="13"
+                      x={uapX1 + 12}
+                      y={uapY + SUBBAR_HEIGHT / 2 + 5}
+                      fontSize="12"
                       fill="#FFFFFF"
-                      fontWeight="700"
-                      letterSpacing="-0.3"
-                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif' }}
+                      fontWeight="600"
+                      letterSpacing="-0.2"
+                      style={{ fontFamily: 'Inter, "Source Sans 3", -apple-system, BlinkMacSystemFont, sans-serif' }}
+                      pointerEvents="none"
                     >
                       {uap.title}
                     </text>
-
-                    {/* Status indicator dot (right side) */}
-                    <circle
-                      cx={uapX2 - 10}
-                      cy={uapY + SUBBAR_HEIGHT / 2}
-                      r="4"
-                      fill="#10B981"
-                      opacity="0.9"
-                    />
                   </g>
                 );
               })}
@@ -585,120 +616,107 @@ export function Timeline({
           );
         })}
 
-        {/* Milestones - Sophisticated vibrant design */}
+        {/* Milestones - Clean, elegant design with Blaze Orange */}
         {milestones.map((ms, msIndex) => {
           const x = dateToX(ms.date);
           const y = totalRowsHeight + 50 + msIndex * 50;
 
           return (
             <g key={ms.id}>
-              {/* Vertical indicator line with gradient */}
+              {/* Vertical indicator line - subtle Deep Sea Green */}
               <line
                 x1={x}
                 y1={HEADER_HEIGHT}
                 x2={x}
                 y2={y - 20}
-                stroke="url(#coralGradient)"
-                strokeWidth="2.5"
-                strokeDasharray="8 6"
-                opacity="0.4"
+                stroke="#075056"
+                strokeWidth="2"
+                strokeDasharray="6 4"
+                opacity="0.25"
               />
 
-              {/* Milestone marker - complex multi-layer */}
-              <g filter="url(#complexShadow)">
-                {/* Outer ring */}
+              {/* Milestone marker - clean Blaze Orange diamond */}
+              <g filter="url(#softShadow)">
+                {/* Outer glow */}
                 <circle
                   cx={x}
                   cy={y}
-                  r="14"
-                  fill="url(#coralGradient)"
-                  opacity="0.2"
+                  r="12"
+                  fill="#FF5B04"
+                  opacity="0.15"
                 />
 
-                {/* Main marker */}
-                <circle
-                  cx={x}
-                  cy={y}
-                  r="11"
-                  fill="url(#coralGradient)"
+                {/* Main marker - diamond shape using transform */}
+                <rect
+                  x={x - 7}
+                  y={y - 7}
+                  width="14"
+                  height="14"
+                  fill="#FF5B04"
                   stroke="none"
+                  rx="2"
+                  transform={`rotate(45 ${x} ${y})`}
                 />
 
                 {/* Shimmer overlay */}
-                <circle
-                  cx={x}
-                  cy={y - 1}
-                  r="11"
+                <rect
+                  x={x - 7}
+                  y={y - 7}
+                  width="14"
+                  height="7"
                   fill="url(#shimmer)"
                   stroke="none"
-                  opacity="0.6"
-                />
-
-                {/* White border for definition */}
-                <circle
-                  cx={x}
-                  cy={y}
-                  r="11"
-                  fill="none"
-                  stroke="#FFFFFF"
-                  strokeWidth="2"
+                  rx="2"
+                  transform={`rotate(45 ${x} ${y})`}
                   opacity="0.5"
                 />
 
-                {/* Inner core */}
-                <circle
-                  cx={x}
-                  cy={y}
-                  r="4"
-                  fill="#FFFFFF"
-                  opacity="0.95"
+                {/* White border for definition */}
+                <rect
+                  x={x - 7}
+                  y={y - 7}
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="#FFFFFF"
+                  strokeWidth="2"
+                  rx="2"
+                  transform={`rotate(45 ${x} ${y})`}
+                  opacity="0.4"
                 />
 
-                {/* Accent dot */}
+                {/* Inner dot */}
                 <circle
                   cx={x}
                   cy={y}
-                  r="2"
-                  fill="#FB923C"
-                  opacity="0.8"
+                  r="3"
+                  fill="#FFFFFF"
+                  opacity="0.9"
                 />
               </g>
 
-              {/* Milestone label with modern typography */}
-              <text
-                x={x + 22}
-                y={y + 6}
-                fontSize="14"
-                fill="#18181B"
-                fontWeight="700"
-                letterSpacing="-0.3"
-                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif' }}
-              >
-                {ms.title}
-              </text>
-
               {/* Subtle background for label */}
               <rect
-                x={x + 18}
-                y={y - 12}
-                width={ms.title.length * 8.5 + 8}
-                height="24"
-                fill="#FAFAF9"
-                rx="6"
-                ry="6"
-                opacity="0.9"
-                style={{ pointerEvents: 'none' }}
+                x={x + 16}
+                y={y - 11}
+                width={ms.title.length * 8 + 12}
+                height="22"
+                fill="#E4EEF0"
+                rx="4"
+                ry="4"
+                opacity="0.95"
+                filter="url(#softShadow)"
               />
 
-              {/* Re-render label on top */}
+              {/* Milestone label - Inter font, Mirage color */}
               <text
                 x={x + 22}
-                y={y + 6}
-                fontSize="14"
-                fill="#18181B"
-                fontWeight="700"
-                letterSpacing="-0.3"
-                style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif' }}
+                y={y + 5}
+                fontSize="13"
+                fill="#16232A"
+                fontWeight="600"
+                letterSpacing="-0.2"
+                style={{ fontFamily: 'Inter, "Source Sans 3", -apple-system, BlinkMacSystemFont, sans-serif' }}
               >
                 {ms.title}
               </text>
