@@ -76,100 +76,73 @@ export function Toolbar({
 
   return (
     <>
-      <div className="bg-white/90 backdrop-blur-2xl border-b-2 border-purple-200/40 px-6 py-4 flex items-center gap-4 flex-wrap no-print shadow-medium relative">
-        {/* Subtle gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-50/20 via-transparent to-cyan-50/20 pointer-events-none"></div>
-        <div className="relative z-10 flex items-center gap-4 flex-wrap w-full">
-        {/* Zoom Controls */}
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-600">Ansicht</label>
-          <div className="flex gap-1 bg-gray-50 p-1 rounded-lg">
-            <button
-              onClick={() => onZoomChange('week')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                zoomLevel === 'week'
-                  ? 'bg-white text-primary-700 shadow-soft'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Woche
+      <div className="bg-white border-b border-gray-100 no-print px-6 py-3">
+        <div className="flex items-center justify-between">
+          {/* Left: Breadcrumb Navigation */}
+          <div className="flex items-center gap-2">
+            <button className="text-gray-400 hover:text-gray-600 transition-colors">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
-            <button
-              onClick={() => onZoomChange('month')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                zoomLevel === 'month'
-                  ? 'bg-white text-primary-700 shadow-soft'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Monat
-            </button>
-            <button
-              onClick={() => onZoomChange('quarter')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                zoomLevel === 'quarter'
-                  ? 'bg-white text-primary-700 shadow-soft'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Quartal
-            </button>
+            <div className="flex items-center gap-2 text-sm">
+              <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+              </svg>
+              <span className="text-gray-500 hover:text-gray-700 cursor-pointer font-medium">{projectName}</span>
+              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              <span className="text-gray-900 font-medium">Timeline</span>
+            </div>
           </div>
-        </div>
 
-        <div className="w-px h-8 bg-gray-200" />
+          {/* Right: Actions */}
+          <div className="flex items-center gap-2">
+            {/* Search */}
+            <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
 
-        {/* Add Controls */}
-        <div className="flex gap-2">
-          <button onClick={onAddWorkPackage} className="btn-sm btn-primary">
-            + Arbeitspaket
-          </button>
-          <button onClick={onAddMilestone} className="btn-sm btn-secondary">
-            + Meilenstein
-          </button>
-        </div>
+            {/* Add Buttons */}
+            <button onClick={onAddWorkPackage} className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors">
+              + Arbeitspaket
+            </button>
+            <button onClick={onAddMilestone} className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+              + Meilenstein
+            </button>
 
-        <div className="w-px h-8 bg-gray-200" />
+            {/* More Actions */}
+            <button onClick={onExportJson} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </button>
+            <button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </button>
 
-        {/* Export/Import */}
-        <div className="flex gap-2">
-          <button onClick={onExportJson} className="btn-sm btn-secondary">
-            Export JSON
-          </button>
-          <button onClick={onCopyJson} className="btn-sm btn-secondary">
-            Kopieren
-          </button>
-          <button onClick={() => fileInputRef.current?.click()} className="btn-sm btn-secondary">
-            Import Datei
-          </button>
-          <button onClick={() => setShowImportModal(true)} className="btn-sm btn-secondary">
-            Import Text
-          </button>
-        </div>
+            {/* Share Button */}
+            <button className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              Share
+            </button>
 
-        <div className="w-px h-8 bg-gray-200" />
-
-        {/* PDF/PNG Export */}
-        <div className="flex gap-2">
-          <button onClick={onExportPdf} className="btn-sm btn-success">
-            PDF (Drucken)
-          </button>
-          <button onClick={handlePdfTimelineExport} className="btn-sm btn-success">
-            PDF Timeline
-          </button>
-          <button onClick={handlePngExport} className="btn-sm btn-success">
-            PNG
-          </button>
-        </div>
-
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json"
-          onChange={handleFileImport}
-          className="hidden"
-        />
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleFileImport}
+              className="hidden"
+            />
+          </div>
         </div>
       </div>
 

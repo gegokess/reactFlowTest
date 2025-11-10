@@ -81,7 +81,7 @@ function App() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-sand-50 via-sand-200 to-sand-300">
+    <div className="h-screen flex flex-col bg-[#FAFBFC]">
       {/* Toolbar */}
       <Toolbar
         projectName={project.name}
@@ -96,27 +96,27 @@ function App() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden gap-8 p-8">
-        {/* Left Panel: Work Package Tree */}
-        <div className="w-[440px] bg-white rounded-3xl shadow-strong border-2 border-deepsea-200/40 overflow-hidden flex flex-col no-print">
-          <div className="p-8 border-b-2 border-deepsea-100/60 bg-gradient-to-br from-deepsea-50/50 via-sand-100/30 to-transparent">
+      <div className="flex-1 flex overflow-hidden px-6 py-6 gap-6">
+        {/* Left Sidebar: Work Package Tree */}
+        <div className="w-[280px] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col no-print">
+          <div className="px-5 py-5 border-b border-gray-100 bg-white">
             <input
               type="text"
               value={project.name}
               onChange={e => updateProject({ name: e.target.value })}
-              className="input w-full font-bold text-2xl border-0 px-0 focus:ring-0 bg-transparent text-mirage-600"
+              className="w-full font-semibold text-base border-0 px-0 py-1 focus:ring-0 bg-transparent text-gray-900 placeholder:text-gray-400"
               placeholder="Projektname"
             />
             {project.description !== undefined && (
               <textarea
                 value={project.description}
                 onChange={e => updateProject({ description: e.target.value })}
-                className="input w-full mt-5 text-sm resize-none border-deepsea-200 focus:border-deepsea-400"
+                className="w-full mt-2 text-xs resize-none border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                 placeholder="Beschreibung (optional)"
                 rows={2}
               />
             )}
-            <div className="mt-6 flex items-center gap-3 p-4 bg-sand-100 rounded-xl border border-deepsea-100/30">
+            <div className="mt-3 flex items-center gap-2 p-2.5 bg-gray-50 rounded-lg">
               <input
                 type="checkbox"
                 id="clampUap"
@@ -129,9 +129,9 @@ function App() {
                     },
                   })
                 }
-                className="rounded text-deepsea-500 focus:ring-deepsea-400 w-5 h-5"
+                className="rounded text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5"
               />
-              <label htmlFor="clampUap" className="text-sm text-mirage-500 font-medium">
+              <label htmlFor="clampUap" className="text-xs text-gray-600 font-medium">
                 UAPs in manuellen APs begrenzen
               </label>
             </div>
@@ -151,7 +151,7 @@ function App() {
         </div>
 
         {/* Right Panel: Timeline */}
-        <div className="flex-1 bg-white rounded-3xl shadow-strong border-2 border-blaze-200/40 overflow-hidden print-full-width">
+        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden print-full-width">
           <Timeline
             workPackages={project.workPackages}
             milestones={project.milestones}

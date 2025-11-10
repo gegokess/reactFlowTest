@@ -1,12 +1,15 @@
 // Domänenmodell für Projekt Zeitplan
 
-export type ZoomLevel = 'week' | 'month' | 'quarter';
+export type ZoomLevel = 'week' | 'month' | 'quarter' | 'year';
 
 export interface SubPackage {
   id: string;
   title: string;
   start: string; // ISO date string YYYY-MM-DD
   end: string;   // ISO date string YYYY-MM-DD
+  category?: string; // Optional category/subtitle
+  color?: string; // Color for the left bar (hex or color name)
+  assignedTo?: string[]; // Array of person names/initials
 }
 
 export interface WorkPackage {
