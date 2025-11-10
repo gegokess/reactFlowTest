@@ -283,6 +283,23 @@ const Timeline: React.FC<TimelineProps> = ({
           />
         </g>
 
+        {/* Milestone Linien hinter den Arbeitspaketen */}
+        {milestones.map(ms => {
+          const msX = dateToX(ms.date);
+          return (
+            <line
+              key={`ms-line-${ms.id}`}
+              x1={msX}
+              y1={HEADER_HEIGHT}
+              x2={msX}
+              y2={totalHeight}
+              stroke="var(--color-warning)"
+              strokeWidth={2}
+              strokeDasharray="4 4"
+            />
+          );
+        })}
+
         {/* WorkPackages und SubPackages */}
         {workPackages.map((wp, wpIndex) => {
           const rowY = getRowY(wpIndex);
@@ -386,26 +403,17 @@ const Timeline: React.FC<TimelineProps> = ({
           );
         })}
 
-        {/* Milestones */}
+        {/* Milestone Marker & Labels */}
         {milestones.map(ms => {
           const msX = dateToX(ms.date);
+          const markerY = totalHeight - 60; // Marker im unteren Bereich der Timeline
+          const labelY = markerY + 4;
 
           return (
             <g key={ms.id} className="milestone">
-              {/* Vertikale Linie */}
-              <line
-                x1={msX}
-                y1={HEADER_HEIGHT}
-                x2={msX}
-                y2={totalHeight}
-                stroke="var(--color-warning)"
-                strokeWidth={2}
-                strokeDasharray="4 4"
-              />
-
               {/* Diamant-Symbol */}
               <path
-                d={`M ${msX} ${HEADER_HEIGHT + 15} L ${msX + 8} ${HEADER_HEIGHT + 23} L ${msX} ${HEADER_HEIGHT + 31} L ${msX - 8} ${HEADER_HEIGHT + 23} Z`}
+                d={`M ${msX} ${markerY - 8} L ${msX + 8} ${markerY} L ${msX} ${markerY + 8} L ${msX - 8} ${markerY} Z`}
                 fill="var(--color-warning)"
                 stroke="white"
                 strokeWidth={2}
@@ -414,7 +422,7 @@ const Timeline: React.FC<TimelineProps> = ({
               {/* Label */}
               <text
                 x={msX + 12}
-                y={HEADER_HEIGHT + 27}
+                y={labelY}
                 className="text-xs font-medium fill-warning"
               >
                 {ms.title}
