@@ -1,245 +1,179 @@
-// PDF generation utilities (no external libraries)
+/**
+ * PDF Export Utilities
+ * Funktionen für den PDF-Export über Print-Dialog
+ */
 
 /**
- * Generates a minimal PDF with an embedded JPEG image
- * PDF structure follows PDF 1.4 specification
+ * Öffnet den Print-Dialog für PDF-Export
+ * Die Anwendung sollte bereits print-friendly Styles haben (@media print)
  */
-export async function generatePdfFromSvg(
-  svgElement: SVGSVGElement,
-  filename: string
-): Promise<void> {
-  // Convert SVG to canvas (high resolution)
-  const canvas = await svgToCanvas(svgElement);
-
-  // Convert canvas to JPEG with high quality (0.98 for near-lossless)
-  const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.98);
-  const jpegData = dataUrlToBytes(jpegDataUrl);
-
-  // Create PDF with embedded JPEG
-  const pdfBytes = createPdfWithImage(jpegData, canvas.width, canvas.height);
-
-  // Download PDF
-  downloadBlob(pdfBytes, filename, 'application/pdf');
+export function exportToPDF(): void {
+  window.print();
 }
 
 /**
- * Converts SVG element to canvas with high resolution (3x scale for HD export)
+ * Bereitet die Seite für den PDF-Export vor
+ * Kann verwendet werden, um vor dem Drucken bestimmte Elemente zu verstecken/anzeigen
  */
-async function svgToCanvas(svgElement: SVGSVGElement): Promise<HTMLCanvasElement> {
-  // Get SVG dimensions
-  const bbox = svgElement.getBoundingClientRect();
-  const width = bbox.width || 1800;
-  const height = bbox.height || 1200;
-
-  // High-resolution scale factor (3x for crisp, high-quality export)
-  const scale = 3;
-  const scaledWidth = width * scale;
-  const scaledHeight = height * scale;
-
-  // Serialize SVG to string
-  const serializer = new XMLSerializer();
-  const svgString = serializer.serializeToString(svgElement);
-
-  // Create blob and object URL
-  const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(svgBlob);
-
-  // Load image
-  const img = new Image();
-  img.width = width;
-  img.height = height;
-
-  const loadPromise = new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve();
-    img.onerror = reject;
-  });
-
-  img.src = url;
-  await loadPromise;
-
-  // Draw to canvas with high resolution
-  const canvas = document.createElement('canvas');
-  canvas.width = scaledWidth;
-  canvas.height = scaledHeight;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Could not get canvas context');
-
-  // Enable image smoothing for better quality
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-
-  ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, scaledWidth, scaledHeight);
-  ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
-
-  URL.revokeObjectURL(url);
-
-  return canvas;
+export function preparePrintView(): void {
+  // Füge eine Print-Klasse zum body hinzu
+  document.body.classList.add('print-mode');
 }
 
 /**
- * Converts data URL to byte array
+ * Stellt die normale Ansicht nach dem Drucken wieder her
  */
-function dataUrlToBytes(dataUrl: string): Uint8Array {
-  const base64 = dataUrl.split(',')[1];
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+export function restoreNormalView(): void {
+  document.body.classList.remove('print-mode');
+}
+
+/**
+ * Exportiert die Timeline als PDF
+ * Nutzt den Browser's Print-Dialog mit optimierten Print-Styles
+ */
+export function exportTimelineToPDF(): void {
+  // Bereite die Ansicht vor
+  preparePrintView();
+
+  // Kleine Verzögerung, damit die Styles angewendet werden können
+  setTimeout(() => {
+    window.print();
+
+    // Stelle die normale Ansicht nach dem Drucken wieder her
+    // (wird ausgeführt, wenn der Print-Dialog geschlossen wird)
+    setTimeout(() => {
+      restoreNormalView();
+    }, 100);
+  }, 100);
+}
+
+/**
+ * Generiert Print-Styles für optimierten PDF-Export
+ * Diese Funktion gibt einen CSS-String zurück, der in ein <style>-Tag eingefügt werden kann
+ */
+export function getPrintStyles(): string {
+  return `
+    @media print {
+      /* Verstecke nicht-druckbare Elemente */
+      .no-print,
+      button,
+      .toolbar-actions,
+      .three-dot-menu {
+        display: none !important;
+      }
+
+      /* Optimiere Layout für Druck */
+      body {
+        margin: 0;
+        padding: 20px;
+        background: white;
+      }
+
+      /* Timeline optimieren */
+      .timeline-container {
+        page-break-inside: avoid;
+        width: 100%;
+        overflow: visible;
+      }
+
+      /* Farben für Druck optimieren */
+      svg text {
+        fill: black !important;
+      }
+
+      /* Entferne Schatten für bessere Druckqualität */
+      * {
+        box-shadow: none !important;
+      }
+
+      /* Optimiere Schriftgröße */
+      body {
+        font-size: 10pt;
+      }
+
+      /* Seitenumbrüche kontrollieren */
+      .work-package-tree,
+      .timeline-row {
+        page-break-inside: avoid;
+      }
+    }
+
+    @page {
+      size: A4 landscape;
+      margin: 1cm;
+    }
+  `;
+}
+
+/**
+ * Fügt Print-Styles dynamisch zum Document hinzu
+ */
+export function injectPrintStyles(): void {
+  const styleId = 'print-styles';
+
+  // Prüfe, ob die Styles bereits existieren
+  if (document.getElementById(styleId)) {
+    return;
   }
-  return bytes;
+
+  const styleElement = document.createElement('style');
+  styleElement.id = styleId;
+  styleElement.textContent = getPrintStyles();
+  document.head.appendChild(styleElement);
 }
 
 /**
- * Creates a minimal PDF document with embedded JPEG image
- * A4 Landscape: 842 x 595 points (1 point = 1/72 inch)
+ * Initialisiert PDF-Export-Funktionalität
+ * Sollte beim App-Start aufgerufen werden
  */
-function createPdfWithImage(jpegData: Uint8Array, imgWidth: number, imgHeight: number): Uint8Array {
-  const pageWidth = 842; // A4 landscape width in points
-  const pageHeight = 595; // A4 landscape height in points
+export function initPDFExport(): void {
+  injectPrintStyles();
 
-  // Calculate image dimensions to fit page (with margins)
-  const margin = 40;
-  const maxWidth = pageWidth - 2 * margin;
-  const maxHeight = pageHeight - 2 * margin;
-
-  const scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight);
-  const scaledWidth = imgWidth * scale;
-  const scaledHeight = imgHeight * scale;
-
-  // Center image on page
-  const x = (pageWidth - scaledWidth) / 2;
-  const y = (pageHeight - scaledHeight) / 2;
-
-  // Build PDF structure
-  const pdfLines: string[] = [];
-
-  // Header
-  pdfLines.push('%PDF-1.4');
-  pdfLines.push('%âãÏÓ'); // Binary marker
-
-  // Object 1: Catalog
-  const obj1Start = getPdfPosition(pdfLines);
-  pdfLines.push('1 0 obj');
-  pdfLines.push('<< /Type /Catalog /Pages 2 0 R >>');
-  pdfLines.push('endobj');
-
-  // Object 2: Pages
-  const obj2Start = getPdfPosition(pdfLines);
-  pdfLines.push('2 0 obj');
-  pdfLines.push('<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
-  pdfLines.push('endobj');
-
-  // Object 3: Page
-  const obj3Start = getPdfPosition(pdfLines);
-  pdfLines.push('3 0 obj');
-  pdfLines.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}]`);
-  pdfLines.push('   /Contents 4 0 R /Resources << /XObject << /Im1 5 0 R >> >> >>');
-  pdfLines.push('endobj');
-
-  // Object 4: Content stream
-  const contentStream = `q\n${scaledWidth.toFixed(2)} 0 0 ${scaledHeight.toFixed(2)} ${x.toFixed(2)} ${y.toFixed(2)} cm\n/Im1 Do\nQ\n`;
-  const obj4Start = getPdfPosition(pdfLines);
-  pdfLines.push('4 0 obj');
-  pdfLines.push(`<< /Length ${contentStream.length} >>`);
-  pdfLines.push('stream');
-  pdfLines.push(contentStream);
-  pdfLines.push('endstream');
-  pdfLines.push('endobj');
-
-  // Object 5: Image
-  const obj5Start = getPdfPosition(pdfLines);
-  pdfLines.push('5 0 obj');
-  pdfLines.push(`<< /Type /XObject /Subtype /Image /Width ${imgWidth} /Height ${imgHeight}`);
-  pdfLines.push('   /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode');
-  pdfLines.push(`   /Length ${jpegData.length} >>`);
-  pdfLines.push('stream');
-
-  // We'll add the binary JPEG data separately
-  const beforeImage = pdfLines.join('\n') + '\n';
-  const afterImage = '\nendstream\nendobj\n';
-
-  // Cross-reference table
-  const xrefStart = beforeImage.length + jpegData.length + afterImage.length;
-  const xref = [
-    'xref',
-    '0 6',
-    '0000000000 65535 f ',
-    padOffset(obj1Start),
-    padOffset(obj2Start),
-    padOffset(obj3Start),
-    padOffset(obj4Start),
-    padOffset(obj5Start),
-    'trailer',
-    '<< /Size 6 /Root 1 0 R >>',
-    'startxref',
-    xrefStart.toString(),
-    '%%EOF'
-  ].join('\n');
-
-  // Combine everything
-  const textEncoder = new TextEncoder();
-  const beforeBytes = textEncoder.encode(beforeImage);
-  const afterBytes = textEncoder.encode(afterImage);
-  const xrefBytes = textEncoder.encode(xref);
-
-  const totalLength = beforeBytes.length + jpegData.length + afterBytes.length + xrefBytes.length;
-  const pdfBytes = new Uint8Array(totalLength);
-
-  let offset = 0;
-  pdfBytes.set(beforeBytes, offset);
-  offset += beforeBytes.length;
-  pdfBytes.set(jpegData, offset);
-  offset += jpegData.length;
-  pdfBytes.set(afterBytes, offset);
-  offset += afterBytes.length;
-  pdfBytes.set(xrefBytes, offset);
-
-  return pdfBytes;
-}
-
-function getPdfPosition(lines: string[]): number {
-  return lines.join('\n').length + 1; // +1 for newline
-}
-
-function padOffset(offset: number): string {
-  return offset.toString().padStart(10, '0') + ' 00000 n ';
+  // Event-Listener für beforeprint und afterprint
+  window.addEventListener('beforeprint', preparePrintView);
+  window.addEventListener('afterprint', restoreNormalView);
 }
 
 /**
- * Downloads a blob as a file
+ * Cleanup-Funktion für PDF-Export
+ * Sollte beim App-Unmount aufgerufen werden
  */
-function downloadBlob(data: Uint8Array, filename: string, mimeType: string): void {
-  const blob = new Blob([data as BlobPart], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+export function cleanupPDFExport(): void {
+  window.removeEventListener('beforeprint', preparePrintView);
+  window.removeEventListener('afterprint', restoreNormalView);
 }
 
 /**
- * Generates PNG from SVG
+ * Exportiert die Timeline als PNG
+ * Nutzt html-to-image library
  */
-export async function generatePngFromSvg(
-  svgElement: SVGSVGElement,
-  filename: string
-): Promise<void> {
-  const canvas = await svgToCanvas(svgElement);
+export async function exportTimelineToPNG(): Promise<void> {
+  try {
+    // Dynamischer Import von html-to-image
+    const { toPng } = await import('html-to-image');
 
-  // Convert to PNG blob
-  canvas.toBlob((blob) => {
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
+    // Finde das SVG-Element
+    const svgElement = document.getElementById('gantt-chart-svg');
+    if (!svgElement) {
+      throw new Error('Timeline SVG nicht gefunden');
+    }
+
+    // Konvertiere zu PNG
+    const dataUrl = await toPng(svgElement, {
+      quality: 1.0,
+      pixelRatio: 2, // Höhere Auflösung
+      backgroundColor: '#ffffff',
+    });
+
+    // Download-Link erstellen
     const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
+    link.download = `gantt-chart-${new Date().toISOString().split('T')[0]}.png`;
+    link.href = dataUrl;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }, 'image/png');
+  } catch (error) {
+    console.error('Fehler beim PNG-Export:', error);
+    throw error;
+  }
 }

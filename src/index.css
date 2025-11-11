@@ -1,159 +1,162 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply bg-sand-200 text-mirage-600;
-    margin: 0;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+:root {
+  /* Neutrals */
+  --color-bg: #FFFFFF;
+  --color-surface: #F6F7F9;
+  --color-border: #E9ECF1;
+  --color-line: #EEF1F5;
+  --color-text: #1E2430;
+  --color-text-muted: #6B7280;
 
-  * {
-    box-sizing: border-box;
-  }
+  /* Semantic */
+  --color-success: #38C77A;
+  --color-warning: #FF8A3D;
+  --color-danger: #F05252;
+  --color-info: #4C6EF5;
+
+  /* Accents */
+  --color-accent-1: #8A7CF6;
+  --color-accent-2: #EA7AF6;
+  --color-accent-3: #FDB36A;
+  --gradient-accent: linear-gradient(90deg, #8A7CF6 0%, #EA7AF6 55%, #FDB36A 100%);
+
+  /* Spacing (8-point grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Border Radius */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-md: 0 6px 24px rgba(16, 24, 40, 0.06);
+  --shadow-lg: 0 12px 40px rgba(16, 24, 40, 0.08);
 }
 
-@layer components {
-  /* Button styles - Modern, minimal design with new palette */
-  .btn {
-    @apply px-6 py-3 rounded-2xl font-semibold transition-all duration-200;
-    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
-    @apply shadow-soft hover:shadow-medium;
-  }
-
-  .btn-primary {
-    @apply btn bg-blaze-500 text-white hover:bg-blaze-600;
-    @apply focus:ring-blaze-400 hover:shadow-glow;
-  }
-
-  .btn-secondary {
-    @apply btn bg-white text-mirage-600 border-2 border-deepsea-200 hover:bg-sand-50 hover:border-deepsea-300;
-    @apply focus:ring-deepsea-400;
-  }
-
-  .btn-danger {
-    @apply btn bg-red-50 text-red-700 border-2 border-red-200 hover:bg-red-100;
-    @apply focus:ring-red-500;
-  }
-
-  .btn-success {
-    @apply btn bg-deepsea-50 text-deepsea-700 border-2 border-deepsea-200 hover:bg-deepsea-100;
-    @apply focus:ring-deepsea-500;
-  }
-
-  .btn-sm {
-    @apply px-4 py-2 text-sm;
-  }
-
-  /* Icon button - Clean and subtle */
-  .icon-btn {
-    @apply p-3 rounded-xl transition-all duration-200;
-    @apply hover:bg-sand-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blaze-400;
-    @apply text-mirage-500 hover:text-blaze-500;
-  }
-
-  /* Input styles - Modern with subtle borders */
-  .input {
-    @apply px-5 py-3 border-2 border-sand-400 rounded-2xl bg-white;
-    @apply focus:outline-none focus:ring-2 focus:ring-blaze-400 focus:border-blaze-400;
-    @apply transition-all duration-200;
-    @apply placeholder:text-gray-400 text-mirage-600;
-  }
-
-  /* Select styles */
-  .select {
-    @apply input cursor-pointer;
-  }
-
-  /* Card styles - Clean with subtle shadows */
-  .card {
-    @apply bg-white rounded-2xl shadow-soft border-2 border-sand-300 p-6;
-    @apply hover:shadow-medium transition-shadow duration-200;
-  }
-
-  /* Toast styles - Modern notifications */
-  .toast {
-    @apply px-6 py-4 rounded-2xl shadow-strong text-white font-semibold;
-    @apply transition-all duration-300;
-    @apply backdrop-blur-sm;
-  }
-
-  .toast-success {
-    @apply toast bg-deepsea-600;
-  }
-
-  .toast-error {
-    @apply toast bg-red-600;
-  }
-
-  .toast-info {
-    @apply toast bg-blaze-500;
-  }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* Print styles */
-@media print {
-  @page {
-    size: A4 landscape;
-    margin: 1cm;
-  }
-
-  body {
-    @apply bg-white;
-  }
-
-  .no-print {
-    display: none !important;
-  }
-
-  .print-full-width {
-    width: 100% !important;
-    max-width: none !important;
-  }
-
-  .card {
-    @apply shadow-none border-0;
-  }
-
-  /* Ensure SVG is visible in print */
-  svg {
-    max-width: 100%;
-    height: auto;
-  }
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-/* Custom scrollbar - Minimal and modern with new palette */
+#root {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Custom scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-sand-100;
+  background: var(--color-surface);
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-deepsea-300 rounded-full;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-blaze-400;
+  background: var(--color-text-muted);
 }
 
-/* Drag cursor */
-.cursor-grab {
-  cursor: grab;
+/* Utility classes */
+.gradient-accent {
+  background: var(--gradient-accent);
 }
 
-.cursor-grabbing {
-  cursor: grabbing;
+/* Animations */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
-.cursor-ew-resize {
-  cursor: ew-resize;
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Print Styles - Nur Timeline anzeigen */
+@media print {
+  /* Verstecke alles außer Timeline */
+  .toolbar-actions,
+  button,
+  .three-dot-menu,
+  nav,
+  header {
+    display: none !important;
+  }
+
+  /* Verstecke Sidebar (WorkPackageTree) */
+  .w-96 {
+    display: none !important;
+  }
+
+  /* Timeline auf volle Breite */
+  .timeline-container {
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* Optimiere SVG für Druck */
+  .timeline-svg {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Entferne Schatten */
+  * {
+    box-shadow: none !important;
+  }
+
+  /* Optimiere Text */
+  body {
+    font-size: 10pt;
+    background: white;
+    margin: 0;
+    padding: 10px;
+  }
+
+  /* Seitenumbrüche vermeiden */
+  svg, .timeline-container {
+    page-break-inside: avoid;
+  }
+}
+
+@page {
+  size: A4 landscape;
+  margin: 0.5cm;
 }

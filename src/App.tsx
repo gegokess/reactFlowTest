@@ -1,18 +1,26 @@
-import { useState, useEffect } from 'react';
-import { ZoomLevel } from './types';
+/**
+ * App Component
+ * Hauptkomponente mit Layout-Orchestrierung
+ * Basierend auf docs/03-Components.md
+ */
+
+import React, { useState, useEffect } from 'react';
 import { useProject } from './hooks/useProject';
-import { Toolbar } from './components/Toolbar';
-import { WorkPackageTree } from './components/WorkPackageTree';
-import { Timeline } from './components/Timeline';
-import { ToastContainer } from './components/ToastContainer';
-import { runDevChecks } from './utils/devChecks';
+import type { ZoomLevel } from './types';
+import Toolbar from './components/Toolbar';
+import WorkPackageTree from './components/WorkPackageTree';
+import Timeline from './components/Timeline';
+import ToastContainer from './components/ToastContainer';
+import { exportTimelineToPDF, exportTimelineToPNG, initPDFExport, cleanupPDFExport } from './utils/pdfUtils';
 
-function App() {
-  const [zoomLevel, setZoomLevel] = useState<ZoomLevel>('month');
-
+const App: React.FC = () => {
   const {
     project,
-    updateProject,
+    toasts,
+    showToast,
+    removeToast,
+    updateProjectName,
+    updateProjectDates,
     addWorkPackage,
     updateWorkPackage,
     deleteWorkPackage,
@@ -22,151 +30,126 @@ function App() {
     addMilestone,
     updateMilestone,
     deleteMilestone,
-    exportToJson,
-    importFromJson,
-    toasts,
-    addToast,
-    removeToast,
+    exportToFile,
+    copyToClipboard,
+    importFromJSON,
   } = useProject();
 
-  // Run dev checks on mount
+  const [zoomLevel, setZoomLevel] = useState<ZoomLevel>('month');
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+
+  // PDF Export initialisieren
   useEffect(() => {
-    runDevChecks();
+    initPDFExport();
+    return () => cleanupPDFExport();
   }, []);
 
-  // Export handlers
-  const handleExportJson = () => {
-    const json = exportToJson();
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${project.name}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    addToast('JSON exportiert', 'success');
+  // Drag & Drop für JSON-Import
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(true);
   };
 
-  const handleCopyJson = async () => {
-    const json = exportToJson();
-    try {
-      await navigator.clipboard.writeText(json);
-      addToast('JSON in Zwischenablage kopiert', 'success');
-    } catch (error) {
-      addToast('Kopieren fehlgeschlagen', 'error');
-    }
-  };
-
-  const handleImportJson = (json: string) => {
-    importFromJson(json);
-  };
-
-  const handleExportPdf = () => {
-    window.print();
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (!file) return;
+    setIsDraggingFile(false);
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      handleImportJson(text);
-    };
-    reader.readAsText(file);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/json') {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        if (text) {
+          importFromJSON(text);
+        }
+      };
+      reader.readAsText(file);
+    } else {
+      showToast('error', 'Bitte eine gültige JSON-Datei hochladen');
+    }
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[#FAFBFC]">
+    <div
+      className="flex flex-col h-screen bg-bg"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {/* Toolbar */}
       <Toolbar
         projectName={project.name}
+        projectStart={project.start}
+        projectEnd={project.end}
         zoomLevel={zoomLevel}
+        onProjectNameChange={updateProjectName}
+        onProjectDatesChange={updateProjectDates}
         onZoomChange={setZoomLevel}
         onAddWorkPackage={addWorkPackage}
         onAddMilestone={addMilestone}
-        onExportJson={handleExportJson}
-        onCopyJson={handleCopyJson}
-        onImportJson={handleImportJson}
-        onExportPdf={handleExportPdf}
+        onExportJSON={exportToFile}
+        onCopyJSON={copyToClipboard}
+        onExportPDF={exportTimelineToPDF}
+        onExportPNG={async () => {
+          try {
+            await exportTimelineToPNG();
+            showToast('success', 'Timeline als PNG exportiert');
+          } catch (error) {
+            showToast('error', 'Fehler beim PNG-Export');
+          }
+        }}
+        onImportJSON={importFromJSON}
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden px-6 py-6 gap-6">
-        {/* Left Sidebar: Work Package Tree */}
-        <div className="w-[280px] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col no-print">
-          <div className="px-5 py-5 border-b border-gray-100 bg-white">
-            <input
-              type="text"
-              value={project.name}
-              onChange={e => updateProject({ name: e.target.value })}
-              className="w-full font-semibold text-base border-0 px-0 py-1 focus:ring-0 bg-transparent text-gray-900 placeholder:text-gray-400"
-              placeholder="Projektname"
-            />
-            {project.description !== undefined && (
-              <textarea
-                value={project.description}
-                onChange={e => updateProject({ description: e.target.value })}
-                className="w-full mt-2 text-xs resize-none border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
-                placeholder="Beschreibung (optional)"
-                rows={2}
-              />
-            )}
-            <div className="mt-3 flex items-center gap-2 p-2.5 bg-gray-50 rounded-lg">
-              <input
-                type="checkbox"
-                id="clampUap"
-                checked={project.settings.clampUapInsideManualAp}
-                onChange={e =>
-                  updateProject({
-                    settings: {
-                      ...project.settings,
-                      clampUapInsideManualAp: e.target.checked,
-                    },
-                  })
-                }
-                className="rounded text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5"
-              />
-              <label htmlFor="clampUap" className="text-xs text-gray-600 font-medium">
-                UAPs in manuellen APs begrenzen
-              </label>
-            </div>
-          </div>
+      <div className="flex flex-1 overflow-hidden">
+        {/* WorkPackage Tree Sidebar */}
+        <WorkPackageTree
+          workPackages={project.workPackages}
+          milestones={project.milestones}
+          onUpdateWorkPackage={updateWorkPackage}
+          onDeleteWorkPackage={deleteWorkPackage}
+          onAddSubPackage={addSubPackage}
+          onUpdateSubPackage={updateSubPackage}
+          onDeleteSubPackage={deleteSubPackage}
+          onUpdateMilestone={updateMilestone}
+          onDeleteMilestone={deleteMilestone}
+        />
 
-          <WorkPackageTree
-            workPackages={project.workPackages}
-            milestones={project.milestones}
-            onUpdateWorkPackage={updateWorkPackage}
-            onDeleteWorkPackage={deleteWorkPackage}
-            onAddSubPackage={addSubPackage}
-            onUpdateSubPackage={updateSubPackage}
-            onDeleteSubPackage={deleteSubPackage}
-            onUpdateMilestone={updateMilestone}
-            onDeleteMilestone={deleteMilestone}
-          />
-        </div>
-
-        {/* Right Panel: Timeline */}
-        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden print-full-width">
-          <Timeline
-            workPackages={project.workPackages}
-            milestones={project.milestones}
-            zoomLevel={zoomLevel}
-            clampUapInsideManualAp={project.settings.clampUapInsideManualAp}
-            onUpdateSubPackage={updateSubPackage}
-            onDrop={handleDrop}
-          />
-        </div>
+        {/* Timeline */}
+        <Timeline
+          workPackages={project.workPackages}
+          milestones={project.milestones}
+          zoomLevel={zoomLevel}
+          clampingEnabled={project.settings.clampUapInsideManualAp}
+          projectStart={project.start}
+          projectEnd={project.end}
+          onUpdateSubPackage={updateSubPackage}
+          onUpdateMilestone={updateMilestone}
+        />
       </div>
 
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
+
+      {/* Drag & Drop Overlay */}
+      {isDraggingFile && (
+        <div className="fixed inset-0 bg-info bg-opacity-20 flex items-center justify-center z-50 pointer-events-none">
+          <div className="bg-white rounded-lg shadow-lg p-8 border-2 border-dashed border-info">
+            <svg className="w-16 h-16 mx-auto mb-4 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <p className="text-lg font-medium text-info">JSON-Datei hier ablegen</p>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default App;

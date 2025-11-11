@@ -1,195 +1,178 @@
-// Development checks using console.assert
+/**
+ * Development Checks & Validation
+ * Funktionen zur Laufzeit-Validierung und Fehlerprüfung
+ */
 
-import { WorkPackage, SubPackage, Project } from '../types';
-import { minDate, maxDate, clampIso, snapToDay } from './dateUtils';
+import type { WorkPackage, SubPackage, Milestone, Project } from '../types';
+import { isValidISODate, isValidDateRange } from './dateUtils';
 
 /**
- * Runs all development checks once on app load
+ * Validiert ein SubPackage-Objekt
  */
-export function runDevChecks(): void {
-  console.log('🔍 Running dev checks...');
+export function validateSubPackage(subPackage: SubPackage): string[] {
+  const errors: string[] = [];
 
-  check1_RollupApCalculation();
-  check2_ApDateReadOnly();
-  check3_ClampIsoValidation();
-  check4_DragResizeSnapping();
-  check5_JsonRoundtrip();
-  check6_PdfExportBlob();
-
-  console.log('✅ Dev-Tests OK');
-}
-
-/**
- * Check 1: rollupAp calculates min/max correctly
- */
-function check1_RollupApCalculation() {
-  const subPackages: SubPackage[] = [
-    { id: '1', title: 'UAP 1', start: '2024-01-10', end: '2024-01-20' },
-    { id: '2', title: 'UAP 2', start: '2024-01-05', end: '2024-01-15' },
-    { id: '3', title: 'UAP 3', start: '2024-01-12', end: '2024-01-25' },
-  ];
-
-  const expectedStart = '2024-01-05'; // min
-  const expectedEnd = '2024-01-25';   // max
-
-  const actualStart = minDate(subPackages.map(sp => sp.start));
-  const actualEnd = maxDate(subPackages.map(sp => sp.end));
-
-  console.assert(
-    actualStart === expectedStart && actualEnd === expectedEnd,
-    'Check 1 failed: rollupAp min/max calculation',
-    { actualStart, actualEnd, expectedStart, expectedEnd }
-  );
-}
-
-/**
- * Check 2: AP dates are read-only when UAPs exist
- * (This is enforced in UI, here we just verify the logic)
- */
-function check2_ApDateReadOnly() {
-  const apWithUaps: WorkPackage = {
-    id: '1',
-    title: 'AP 1',
-    start: '2024-01-01',
-    end: '2024-01-31',
-    mode: 'auto',
-    subPackages: [
-      { id: '1', title: 'UAP', start: '2024-01-10', end: '2024-01-20' }
-    ]
-  };
-
-  const apWithoutUaps: WorkPackage = {
-    id: '2',
-    title: 'AP 2',
-    start: '2024-01-01',
-    end: '2024-01-31',
-    mode: 'manual',
-    subPackages: []
-  };
-
-  // When UAPs exist, dates should be calculated from UAPs
-  const shouldBeReadOnly = apWithUaps.subPackages.length > 0;
-  const shouldBeEditable = apWithoutUaps.subPackages.length === 0;
-
-  console.assert(
-    shouldBeReadOnly && shouldBeEditable,
-    'Check 2 failed: AP date read-only logic',
-    { shouldBeReadOnly, shouldBeEditable }
-  );
-}
-
-/**
- * Check 3: clampIso returns valid ISO for invalid input
- */
-function check3_ClampIsoValidation() {
-  const invalidInputs = ['invalid', '', '2024-13-45', 'abc'];
-
-  for (const input of invalidInputs) {
-    const result = clampIso(input);
-    const isValidIso = /^\d{4}-\d{2}-\d{2}$/.test(result);
-
-    console.assert(
-      isValidIso,
-      'Check 3 failed: clampIso should return valid ISO',
-      { input, result }
-    );
+  if (!subPackage.id) {
+    errors.push('SubPackage ID ist erforderlich');
   }
 
-  // Valid input should pass through
-  const validInput = '2024-01-15';
-  const result = clampIso(validInput);
-  console.assert(
-    result === validInput,
-    'Check 3 failed: clampIso should preserve valid ISO',
-    { validInput, result }
-  );
+  if (!subPackage.title || subPackage.title.trim() === '') {
+    errors.push('SubPackage Titel ist erforderlich');
+  }
+
+  if (!isValidISODate(subPackage.start)) {
+    errors.push(`SubPackage Start-Datum ist ungültig: ${subPackage.start}`);
+  }
+
+  if (!isValidISODate(subPackage.end)) {
+    errors.push(`SubPackage End-Datum ist ungültig: ${subPackage.end}`);
+  }
+
+  if (isValidISODate(subPackage.start) && isValidISODate(subPackage.end)) {
+    if (!isValidDateRange(subPackage.start, subPackage.end)) {
+      errors.push(`SubPackage Start-Datum (${subPackage.start}) muss vor End-Datum (${subPackage.end}) liegen`);
+    }
+  }
+
+  return errors;
 }
 
 /**
- * Check 4: Drag/Resize snapping results in whole days
+ * Validiert ein WorkPackage-Objekt
  */
-function check4_DragResizeSnapping() {
-  const testDates = [
-    '2024-01-15',
-    '2024-06-30',
-    '2024-12-25'
-  ];
+export function validateWorkPackage(workPackage: WorkPackage): string[] {
+  const errors: string[] = [];
 
-  for (const date of testDates) {
-    const snapped = snapToDay(date);
-    const isValidIso = /^\d{4}-\d{2}-\d{2}$/.test(snapped);
+  if (!workPackage.id) {
+    errors.push('WorkPackage ID ist erforderlich');
+  }
 
-    console.assert(
-      isValidIso && snapped === date,
-      'Check 4 failed: snapToDay should return whole days',
-      { date, snapped }
-    );
+  if (!workPackage.title || workPackage.title.trim() === '') {
+    errors.push('WorkPackage Titel ist erforderlich');
+  }
+
+  if (!isValidISODate(workPackage.start)) {
+    errors.push(`WorkPackage Start-Datum ist ungültig: ${workPackage.start}`);
+  }
+
+  if (!isValidISODate(workPackage.end)) {
+    errors.push(`WorkPackage End-Datum ist ungültig: ${workPackage.end}`);
+  }
+
+  if (isValidISODate(workPackage.start) && isValidISODate(workPackage.end)) {
+    if (!isValidDateRange(workPackage.start, workPackage.end)) {
+      errors.push(`WorkPackage Start-Datum (${workPackage.start}) muss vor End-Datum (${workPackage.end}) liegen`);
+    }
+  }
+
+  if (!['auto', 'manual'].includes(workPackage.mode)) {
+    errors.push(`WorkPackage Mode ist ungültig: ${workPackage.mode}`);
+  }
+
+  // Validiere alle SubPackages
+  workPackage.subPackages.forEach((sp, index) => {
+    const spErrors = validateSubPackage(sp);
+    spErrors.forEach(err => errors.push(`SubPackage [${index}]: ${err}`));
+  });
+
+  return errors;
+}
+
+/**
+ * Validiert ein Milestone-Objekt
+ */
+export function validateMilestone(milestone: Milestone): string[] {
+  const errors: string[] = [];
+
+  if (!milestone.id) {
+    errors.push('Milestone ID ist erforderlich');
+  }
+
+  if (!milestone.title || milestone.title.trim() === '') {
+    errors.push('Milestone Titel ist erforderlich');
+  }
+
+  if (!isValidISODate(milestone.date)) {
+    errors.push(`Milestone Datum ist ungültig: ${milestone.date}`);
+  }
+
+  return errors;
+}
+
+/**
+ * Validiert ein komplettes Project-Objekt
+ */
+export function validateProject(project: Project): string[] {
+  const errors: string[] = [];
+
+  if (!project.id) {
+    errors.push('Project ID ist erforderlich');
+  }
+
+  if (!project.name || project.name.trim() === '') {
+    errors.push('Project Name ist erforderlich');
+  }
+
+  if (!project.settings) {
+    errors.push('Project Settings sind erforderlich');
+  }
+
+  // Validiere alle WorkPackages
+  project.workPackages.forEach((wp, index) => {
+    const wpErrors = validateWorkPackage(wp);
+    wpErrors.forEach(err => errors.push(`WorkPackage [${index}]: ${err}`));
+  });
+
+  // Validiere alle Milestones
+  project.milestones.forEach((ms, index) => {
+    const msErrors = validateMilestone(ms);
+    msErrors.forEach(err => errors.push(`Milestone [${index}]: ${err}`));
+  });
+
+  return errors;
+}
+
+/**
+ * Gibt Warnungen für ein Projekt aus (z.B. für Best Practices)
+ */
+export function getProjectWarnings(project: Project): string[] {
+  const warnings: string[] = [];
+
+  // Warnung bei sehr vielen WorkPackages
+  if (project.workPackages.length > 50) {
+    warnings.push(`Projekt hat ${project.workPackages.length} WorkPackages - Performance könnte beeinträchtigt sein`);
+  }
+
+  // Warnung bei sehr vielen SubPackages
+  const totalSubPackages = project.workPackages.reduce((sum, wp) => sum + wp.subPackages.length, 0);
+  if (totalSubPackages > 200) {
+    warnings.push(`Projekt hat ${totalSubPackages} SubPackages - Performance könnte beeinträchtigt sein`);
+  }
+
+  // Warnung bei WorkPackages ohne SubPackages im Auto-Modus
+  project.workPackages.forEach((wp) => {
+    if (wp.mode === 'auto' && wp.subPackages.length === 0) {
+      warnings.push(`WorkPackage "${wp.title}" ist im Auto-Modus, hat aber keine SubPackages`);
+    }
+  });
+
+  return warnings;
+}
+
+/**
+ * Logs validation errors to console (nur im Development-Mode)
+ */
+export function logValidationErrors(context: string, errors: string[]): void {
+  if (import.meta.env.DEV && errors.length > 0) {
+    console.error(`[Validation Error] ${context}:`, errors);
   }
 }
 
 /**
- * Check 5: JSON import/export roundtrip
+ * Logs validation warnings to console (nur im Development-Mode)
  */
-function check5_JsonRoundtrip() {
-  const originalProject: Project = {
-    id: '1',
-    name: 'Test Project',
-    description: 'Test Description',
-    settings: {
-      clampUapInsideManualAp: true
-    },
-    workPackages: [
-      {
-        id: '1',
-        title: 'AP 1',
-        start: '2024-01-01',
-        end: '2024-01-31',
-        mode: 'manual',
-        subPackages: [
-          { id: '1', title: 'UAP 1', start: '2024-01-10', end: '2024-01-20' }
-        ]
-      }
-    ],
-    milestones: [
-      { id: '1', title: 'MS 1', date: '2024-01-15' }
-    ]
-  };
-
-  // Export to JSON
-  const json = JSON.stringify(originalProject);
-
-  // Import from JSON
-  const importedProject: Project = JSON.parse(json);
-
-  // Verify roundtrip
-  const isEqual = JSON.stringify(originalProject) === JSON.stringify(importedProject);
-
-  console.assert(
-    isEqual,
-    'Check 5 failed: JSON roundtrip',
-    { originalProject, importedProject }
-  );
-}
-
-/**
- * Check 6: PDF export creates a valid PDF blob
- */
-function check6_PdfExportBlob() {
-  // Create a simple test data that would result in a PDF blob
-  // We'll just verify the PDF generation logic structure exists
-  const testPdfBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46]); // %PDF header
-
-  console.assert(
-    testPdfBytes.length > 0 && testPdfBytes[0] === 0x25,
-    'Check 6 failed: PDF export should create valid blob',
-    { length: testPdfBytes.length }
-  );
-
-  // Test blob creation
-  const blob = new Blob([testPdfBytes], { type: 'application/pdf' });
-  console.assert(
-    blob.type === 'application/pdf' && blob.size > 0,
-    'Check 6 failed: PDF blob creation',
-    { type: blob.type, size: blob.size }
-  );
+export function logValidationWarnings(context: string, warnings: string[]): void {
+  if (import.meta.env.DEV && warnings.length > 0) {
+    console.warn(`[Validation Warning] ${context}:`, warnings);
+  }
 }

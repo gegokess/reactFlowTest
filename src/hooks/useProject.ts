@@ -1,266 +1,411 @@
-// React hook for project state management with localStorage persistence
-
-import { useState, useEffect } from 'react';
-import { Project, WorkPackage, SubPackage, Milestone, Toast } from '../types';
-import { minDate, maxDate, toIso } from '../utils/dateUtils';
-
-const STORAGE_KEY = 'projekt-zeitplan-data';
-
 /**
- * Creates a default empty project
+ * useProject Hook
+ * Zentrale State-Management für das Projekt
+ * Basierend auf docs/06-StateManagement.md
  */
-function createDefaultProject(): Project {
-  const today = toIso(new Date());
-  const nextMonth = toIso(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
 
+import { useState, useEffect, useCallback } from 'react';
+import type { Project, WorkPackage, SubPackage, Milestone, Toast } from '../types';
+import { today, minDate, maxDate, addDays } from '../utils/dateUtils';
+import { validateProject, logValidationErrors, logValidationWarnings, getProjectWarnings } from '../utils/devChecks';
+
+const STORAGE_KEY = 'projekt-zeitplan';
+
+// Default-Projekt
+function createDefaultProject(): Project {
   return {
     id: crypto.randomUUID(),
     name: 'Neues Projekt',
-    description: '',
+    description: 'Projekt-Beschreibung',
     settings: {
-      clampUapInsideManualAp: true
+      clampUapInsideManualAp: false,
     },
-    workPackages: [
-      {
-        id: crypto.randomUUID(),
-        title: 'Arbeitspaket 1',
-        start: today,
-        end: nextMonth,
-        mode: 'manual',
-        subPackages: []
-      }
-    ],
-    milestones: [
-      {
-        id: crypto.randomUUID(),
-        title: 'Meilenstein 1',
-        date: today
-      }
-    ]
+    workPackages: [],
+    milestones: [],
   };
 }
 
-/**
- * Rollup AP dates from UAPs (auto mode)
- */
-export function rollupAp(ap: WorkPackage): WorkPackage {
-  if (ap.subPackages.length === 0) {
-    return ap; // No rollup needed
-  }
-
-  const starts = ap.subPackages.map(sp => sp.start);
-  const ends = ap.subPackages.map(sp => sp.end);
-
-  return {
-    ...ap,
-    start: minDate(starts),
-    end: maxDate(ends)
-  };
-}
-
-/**
- * Main project hook with localStorage persistence
- */
 export function useProject() {
   const [project, setProject] = useState<Project>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {
-        console.error('Failed to parse stored project', e);
+    // Lade Projekt aus localStorage
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as Project;
+        // Validiere geladenes Projekt
+        const errors = validateProject(parsed);
+        if (errors.length > 0) {
+          logValidationErrors('Loaded Project', errors);
+          return createDefaultProject();
+        }
+        return parsed;
       }
+    } catch (error) {
+      console.error('Fehler beim Laden des Projekts:', error);
     }
     return createDefaultProject();
   });
 
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // Auto-save to localStorage
+  // Speichere Projekt in localStorage bei jeder Änderung
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
+
+      // Validiere und logge Warnungen im Development-Mode
+      if (import.meta.env.DEV) {
+        const warnings = getProjectWarnings(project);
+        logValidationWarnings('Project Update', warnings);
+      }
+    } catch (error) {
+      console.error('Fehler beim Speichern des Projekts:', error);
+      showToast('error', 'Fehler beim Speichern des Projekts');
+    }
   }, [project]);
 
-  // Toast management
-  const addToast = (message: string, type: Toast['type'] = 'info') => {
-    const toast: Toast = {
+  // Toast-Management
+  const showToast = useCallback((type: Toast['type'], message: string, duration = 3000) => {
+    const newToast: Toast = {
       id: crypto.randomUUID(),
+      type,
       message,
-      type
+      duration,
     };
-    setToasts(prev => [...prev, toast]);
+    setToasts(prev => [...prev, newToast]);
 
-    // Auto-remove after 3 seconds
+    // Auto-dismiss
     setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== toast.id));
-    }, 3000);
-  };
+      setToasts(prev => prev.filter(t => t.id !== newToast.id));
+    }, duration);
+  }, []);
 
-  const removeToast = (id: string) => {
+  const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
-  };
+  }, []);
 
-  // Project operations
-  const updateProject = (updates: Partial<Project>) => {
-    setProject(prev => ({ ...prev, ...updates }));
-  };
+  // Projekt-Operationen
+  const updateProjectName = useCallback((name: string) => {
+    setProject(prev => ({ ...prev, name }));
+  }, []);
 
-  const addWorkPackage = () => {
-    const today = toIso(new Date());
-    const nextMonth = toIso(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+  const updateProjectSettings = useCallback((settings: Partial<Project['settings']>) => {
+    setProject(prev => ({
+      ...prev,
+      settings: { ...prev.settings, ...settings },
+    }));
+  }, []);
 
-    const newAp: WorkPackage = {
+  const updateProjectDates = useCallback((start?: string, end?: string) => {
+    setProject(prev => ({ ...prev, start, end }));
+    showToast('success', 'Projekt-Zeitraum aktualisiert');
+  }, [showToast]);
+
+  // Auto-Rollup: Berechnet AP-Daten aus UAPs
+  const rollupWorkPackageDates = useCallback((apId: string) => {
+    setProject(prev => {
+      const wpIndex = prev.workPackages.findIndex(wp => wp.id === apId);
+      if (wpIndex === -1) return prev;
+
+      const wp = prev.workPackages[wpIndex];
+
+      // Wenn keine SubPackages vorhanden, ändere nichts
+      if (wp.subPackages.length === 0) {
+        return prev;
+      }
+
+      // Berechne min/max Daten
+      const starts = wp.subPackages.map(sp => sp.start);
+      const ends = wp.subPackages.map(sp => sp.end);
+      const newStart = minDate(...starts);
+      const newEnd = maxDate(...ends);
+
+      // Erstelle neues WorkPackage mit auto mode
+      const updatedWp: WorkPackage = {
+        ...wp,
+        start: newStart,
+        end: newEnd,
+        mode: 'auto',
+      };
+
+      const newWorkPackages = [...prev.workPackages];
+      newWorkPackages[wpIndex] = updatedWp;
+
+      return {
+        ...prev,
+        workPackages: newWorkPackages,
+      };
+    });
+  }, []);
+
+  // WorkPackage CRUD
+  const addWorkPackage = useCallback(() => {
+    const todayDate = today();
+    const nextWeek = addDays(todayDate, 7);
+
+    const newWp: WorkPackage = {
       id: crypto.randomUUID(),
-      title: `Arbeitspaket ${project.workPackages.length + 1}`,
-      start: today,
-      end: nextMonth,
+      title: 'Neues Arbeitspaket',
+      start: todayDate,
+      end: nextWeek,
       mode: 'manual',
-      subPackages: []
+      subPackages: [],
     };
 
     setProject(prev => ({
       ...prev,
-      workPackages: [...prev.workPackages, newAp]
+      workPackages: [...prev.workPackages, newWp],
     }));
 
-    addToast('Arbeitspaket hinzugefügt', 'success');
-  };
+    showToast('success', 'Arbeitspaket hinzugefügt');
+  }, [showToast]);
 
-  const updateWorkPackage = (id: string, updates: Partial<WorkPackage>) => {
+  const updateWorkPackage = useCallback((id: string, updates: Partial<WorkPackage>) => {
+    setProject(prev => {
+      const index = prev.workPackages.findIndex(wp => wp.id === id);
+      if (index === -1) return prev;
+
+      const updatedWp = { ...prev.workPackages[index], ...updates };
+      const newWorkPackages = [...prev.workPackages];
+      newWorkPackages[index] = updatedWp;
+
+      return {
+        ...prev,
+        workPackages: newWorkPackages,
+      };
+    });
+  }, []);
+
+  const deleteWorkPackage = useCallback((id: string) => {
     setProject(prev => ({
       ...prev,
-      workPackages: prev.workPackages.map(wp => {
-        if (wp.id !== id) return wp;
-
-        const updated = { ...wp, ...updates };
-
-        // Apply rollup if in auto mode or has subpackages
-        if (updated.mode === 'auto' || updated.subPackages.length > 0) {
-          return rollupAp(updated);
-        }
-
-        return updated;
-      })
+      workPackages: prev.workPackages.filter(wp => wp.id !== id),
     }));
-  };
+    showToast('success', 'Arbeitspaket gelöscht');
+  }, [showToast]);
 
-  const deleteWorkPackage = (id: string) => {
-    setProject(prev => ({
-      ...prev,
-      workPackages: prev.workPackages.filter(wp => wp.id !== id)
-    }));
-    addToast('Arbeitspaket gelöscht', 'success');
-  };
+  // SubPackage CRUD
+  const addSubPackage = useCallback((apId: string) => {
+    const todayDate = today();
+    const nextWeek = addDays(todayDate, 7);
 
-  const addSubPackage = (apId: string) => {
-    const ap = project.workPackages.find(wp => wp.id === apId);
-    if (!ap) return;
-
-    const newUap: SubPackage = {
+    const newSp: SubPackage = {
       id: crypto.randomUUID(),
-      title: `UAP ${ap.subPackages.length + 1}`,
-      start: ap.start,
-      end: ap.end
+      title: 'Neues Unterarbeitspaket',
+      start: todayDate,
+      end: nextWeek,
     };
 
-    updateWorkPackage(apId, {
-      mode: 'auto', // Switch to auto mode when adding UAPs
-      subPackages: [...ap.subPackages, newUap]
+    setProject(prev => {
+      const wpIndex = prev.workPackages.findIndex(wp => wp.id === apId);
+      if (wpIndex === -1) return prev;
+
+      const wp = prev.workPackages[wpIndex];
+      const updatedWp: WorkPackage = {
+        ...wp,
+        subPackages: [...wp.subPackages, newSp],
+      };
+
+      const newWorkPackages = [...prev.workPackages];
+      newWorkPackages[wpIndex] = updatedWp;
+
+      return {
+        ...prev,
+        workPackages: newWorkPackages,
+      };
     });
 
-    addToast('Unterarbeitspaket hinzugefügt', 'success');
-  };
+    // Trigger auto-rollup
+    setTimeout(() => rollupWorkPackageDates(apId), 0);
 
-  const updateSubPackage = (apId: string, uapId: string, updates: Partial<SubPackage>) => {
-    const ap = project.workPackages.find(wp => wp.id === apId);
-    if (!ap) return;
+    showToast('success', 'Unterarbeitspaket hinzugefügt');
+  }, [showToast, rollupWorkPackageDates]);
 
-    const updatedSubPackages = ap.subPackages.map(sp =>
-      sp.id === uapId ? { ...sp, ...updates } : sp
-    );
+  const updateSubPackage = useCallback((apId: string, uapId: string, updates: Partial<SubPackage>) => {
+    setProject(prev => {
+      const wpIndex = prev.workPackages.findIndex(wp => wp.id === apId);
+      if (wpIndex === -1) return prev;
 
-    updateWorkPackage(apId, { subPackages: updatedSubPackages });
-  };
+      const wp = prev.workPackages[wpIndex];
+      const spIndex = wp.subPackages.findIndex(sp => sp.id === uapId);
+      if (spIndex === -1) return prev;
 
-  const deleteSubPackage = (apId: string, uapId: string) => {
-    const ap = project.workPackages.find(wp => wp.id === apId);
-    if (!ap) return;
+      const updatedSp = { ...wp.subPackages[spIndex], ...updates };
+      const newSubPackages = [...wp.subPackages];
+      newSubPackages[spIndex] = updatedSp;
 
-    const updatedSubPackages = ap.subPackages.filter(sp => sp.id !== uapId);
+      const updatedWp: WorkPackage = {
+        ...wp,
+        subPackages: newSubPackages,
+      };
 
-    updateWorkPackage(apId, {
-      subPackages: updatedSubPackages,
-      // Switch to manual if no more UAPs
-      mode: updatedSubPackages.length === 0 ? 'manual' : 'auto'
+      const newWorkPackages = [...prev.workPackages];
+      newWorkPackages[wpIndex] = updatedWp;
+
+      return {
+        ...prev,
+        workPackages: newWorkPackages,
+      };
     });
 
-    addToast('Unterarbeitspaket gelöscht', 'success');
-  };
+    // Trigger auto-rollup
+    setTimeout(() => rollupWorkPackageDates(apId), 0);
+  }, [rollupWorkPackageDates]);
 
-  const addMilestone = () => {
-    const today = toIso(new Date());
+  const deleteSubPackage = useCallback((apId: string, uapId: string) => {
+    setProject(prev => {
+      const wpIndex = prev.workPackages.findIndex(wp => wp.id === apId);
+      if (wpIndex === -1) return prev;
 
+      const wp = prev.workPackages[wpIndex];
+      const updatedWp: WorkPackage = {
+        ...wp,
+        subPackages: wp.subPackages.filter(sp => sp.id !== uapId),
+      };
+
+      const newWorkPackages = [...prev.workPackages];
+      newWorkPackages[wpIndex] = updatedWp;
+
+      return {
+        ...prev,
+        workPackages: newWorkPackages,
+      };
+    });
+
+    // Trigger auto-rollup
+    setTimeout(() => rollupWorkPackageDates(apId), 0);
+
+    showToast('success', 'Unterarbeitspaket gelöscht');
+  }, [showToast, rollupWorkPackageDates]);
+
+  // Milestone CRUD
+  const addMilestone = useCallback(() => {
     const newMs: Milestone = {
       id: crypto.randomUUID(),
-      title: `Meilenstein ${project.milestones.length + 1}`,
-      date: today
+      title: 'Neuer Meilenstein',
+      date: today(),
     };
 
     setProject(prev => ({
       ...prev,
-      milestones: [...prev.milestones, newMs]
+      milestones: [...prev.milestones, newMs],
     }));
 
-    addToast('Meilenstein hinzugefügt', 'success');
-  };
+    showToast('success', 'Meilenstein hinzugefügt');
+  }, [showToast]);
 
-  const updateMilestone = (id: string, updates: Partial<Milestone>) => {
+  const updateMilestone = useCallback((id: string, updates: Partial<Milestone>) => {
+    setProject(prev => {
+      const index = prev.milestones.findIndex(ms => ms.id === id);
+      if (index === -1) return prev;
+
+      const updatedMs = { ...prev.milestones[index], ...updates };
+      const newMilestones = [...prev.milestones];
+      newMilestones[index] = updatedMs;
+
+      return {
+        ...prev,
+        milestones: newMilestones,
+      };
+    });
+  }, []);
+
+  const deleteMilestone = useCallback((id: string) => {
     setProject(prev => ({
       ...prev,
-      milestones: prev.milestones.map(ms =>
-        ms.id === id ? { ...ms, ...updates } : ms
-      )
+      milestones: prev.milestones.filter(ms => ms.id !== id),
     }));
-  };
+    showToast('success', 'Meilenstein gelöscht');
+  }, [showToast]);
 
-  const deleteMilestone = (id: string) => {
-    setProject(prev => ({
-      ...prev,
-      milestones: prev.milestones.filter(ms => ms.id !== id)
-    }));
-    addToast('Meilenstein gelöscht', 'success');
-  };
-
-  const exportToJson = (): string => {
+  // Export/Import
+  const exportToJSON = useCallback((): string => {
     return JSON.stringify(project, null, 2);
-  };
+  }, [project]);
 
-  const importFromJson = (json: string) => {
+  const exportToFile = useCallback(() => {
+    const json = exportToJSON();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${project.name.replace(/\s+/g, '-')}_${today()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast('success', 'Projekt als JSON exportiert');
+  }, [exportToJSON, project.name, showToast]);
+
+  const copyToClipboard = useCallback(async () => {
     try {
-      const imported = JSON.parse(json);
-      setProject(imported);
-      addToast('Projekt importiert', 'success');
-    } catch (e) {
-      addToast('Import fehlgeschlagen: Ungültiges JSON', 'error');
+      const json = exportToJSON();
+      await navigator.clipboard.writeText(json);
+      showToast('success', 'JSON in Zwischenablage kopiert');
+    } catch (error) {
+      console.error('Fehler beim Kopieren:', error);
+      showToast('error', 'Fehler beim Kopieren in Zwischenablage');
     }
-  };
+  }, [exportToJSON, showToast]);
+
+  const importFromJSON = useCallback((jsonString: string) => {
+    try {
+      const parsed = JSON.parse(jsonString) as Project;
+
+      // Validiere importiertes Projekt
+      const errors = validateProject(parsed);
+      if (errors.length > 0) {
+        logValidationErrors('Imported Project', errors);
+        showToast('error', 'Importiertes Projekt ist ungültig');
+        return;
+      }
+
+      setProject(parsed);
+      showToast('success', 'Projekt erfolgreich importiert');
+    } catch (error) {
+      console.error('Fehler beim Importieren:', error);
+      showToast('error', 'Fehler beim Importieren des Projekts');
+    }
+  }, [showToast]);
+
+  const resetProject = useCallback(() => {
+    setProject(createDefaultProject());
+    showToast('info', 'Projekt zurückgesetzt');
+  }, [showToast]);
 
   return {
     project,
-    updateProject,
+    toasts,
+
+    // Toast
+    showToast,
+    removeToast,
+
+    // Projekt
+    updateProjectName,
+    updateProjectSettings,
+    updateProjectDates,
+
+    // WorkPackage
     addWorkPackage,
     updateWorkPackage,
     deleteWorkPackage,
+
+    // SubPackage
     addSubPackage,
     updateSubPackage,
     deleteSubPackage,
+
+    // Milestone
     addMilestone,
     updateMilestone,
     deleteMilestone,
-    exportToJson,
-    importFromJson,
-    toasts,
-    addToast,
-    removeToast
+
+    // Export/Import
+    exportToJSON,
+    exportToFile,
+    copyToClipboard,
+    importFromJSON,
+    resetProject,
   };
 }
