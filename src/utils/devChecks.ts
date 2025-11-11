@@ -34,10 +34,6 @@ export function validateSubPackage(subPackage: SubPackage): string[] {
     }
   }
 
-  if (subPackage.color && !/^#[0-9A-Fa-f]{6}$/.test(subPackage.color)) {
-    errors.push(`SubPackage Farbe ist ungültig: ${subPackage.color}`);
-  }
-
   return errors;
 }
 

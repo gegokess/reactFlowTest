@@ -9,9 +9,6 @@ export interface SubPackage {
   title: string;
   start: string; // ISO format: YYYY-MM-DD
   end: string; // ISO format: YYYY-MM-DD
-  category?: string;
-  color?: string; // Hex color code
-  assignedTo?: string[]; // Person names/initials
 }
 
 // Arbeitspaket (AP)
@@ -74,17 +71,6 @@ export const ZOOM_CONFIGS: Record<ZoomLevel, ZoomConfig> = {
   quarter: { tickDays: 30, viewDays: 180, format: 'month' },
   year: { tickDays: 90, viewDays: 365, format: 'quarter' },
 };
-
-// Standard-Farben für UAPs (7 vordefinierte Farben)
-export const DEFAULT_COLORS = [
-  '#3B82F6', // blue
-  '#10B981', // green
-  '#F59E0B', // amber
-  '#EF4444', // red
-  '#8B5CF6', // purple
-  '#EC4899', // pink
-  '#06B6D4', // cyan
-] as const;
 
 // Timeline-Layout-Konstanten
 export const TIMELINE_CONSTANTS = {

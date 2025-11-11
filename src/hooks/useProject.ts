@@ -194,7 +194,6 @@ export function useProject() {
       title: 'Neues Unterarbeitspaket',
       start: todayDate,
       end: nextWeek,
-      color: '#3B82F6', // Default blue
     };
 
     setProject(prev => {

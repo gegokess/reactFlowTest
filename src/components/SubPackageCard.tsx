@@ -1,12 +1,11 @@
 /**
  * SubPackageCard Component
- * Moderne Card für UAPs mit Farbauswahl, Kategorie, Avataren
+ * Card für UAPs mit Titel und Zeitraum
  * Basierend auf docs/03-Components.md und docs/05-DesignSystem.md
  */
 
 import React, { useState, useRef, useEffect } from 'react';
 import type { SubPackage } from '../types';
-import { DEFAULT_COLORS } from '../types';
 import { formatDate } from '../utils/dateUtils';
 
 interface SubPackageCardProps {
@@ -63,43 +62,13 @@ const SubPackageCard: React.FC<SubPackageCardProps> = ({ subPackage, onUpdate, o
     }
   };
 
-  const handleColorChange = (color: string) => {
-    onUpdate({ color });
-    setIsMenuOpen(false);
-  };
-
-  const getInitials = (name: string): string => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  const getAvatarColor = (name: string): string => {
-    // Generiere konsistente Farbe basierend auf Namen
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
-    return colors[Math.abs(hash) % colors.length];
-  };
-
   return (
     <div
-      className="bg-white rounded-md shadow-sm border border-border overflow-hidden flex h-full"
+      className="bg-white rounded-md shadow-sm border border-border overflow-hidden h-full"
       style={{ minWidth: '200px' }}
     >
-      {/* Farbiger Balken links */}
-      <div
-        className="w-1 flex-shrink-0"
-        style={{ backgroundColor: subPackage.color || DEFAULT_COLORS[0] }}
-      />
-
       {/* Content */}
-      <div className="flex-1 p-3 flex flex-col gap-2">
+      <div className="p-3 flex flex-col gap-2">
         {/* Header mit Titel und Drei-Punkt-Menü */}
         <div className="flex items-start justify-between gap-2">
           {isEditingTitle ? (
@@ -138,25 +107,6 @@ const SubPackageCard: React.FC<SubPackageCardProps> = ({ subPackage, onUpdate, o
 
             {isMenuOpen && (
               <div className="absolute right-0 top-full mt-1 bg-white rounded-md shadow-md border border-border z-10 min-w-[160px]">
-                {/* Farbauswahl */}
-                <div className="p-3 border-b border-border">
-                  <div className="text-xs font-medium text-text-muted mb-2">Farbe</div>
-                  <div className="flex gap-2 flex-wrap">
-                    {DEFAULT_COLORS.map(color => (
-                      <button
-                        key={color}
-                        onClick={() => handleColorChange(color)}
-                        className="w-6 h-6 rounded-full border-2 border-white hover:scale-110 transition-transform"
-                        style={{
-                          backgroundColor: color,
-                          boxShadow: subPackage.color === color ? '0 0 0 2px var(--color-info)' : 'none',
-                        }}
-                        title={color}
-                      />
-                    ))}
-                  </div>
-                </div>
-
                 {/* Löschen */}
                 <button
                   onClick={() => {
@@ -176,31 +126,10 @@ const SubPackageCard: React.FC<SubPackageCardProps> = ({ subPackage, onUpdate, o
           </div>
         </div>
 
-        {/* Kategorie */}
-        {subPackage.category && (
-          <div className="text-xs text-text-muted">{subPackage.category}</div>
-        )}
-
         {/* Datum-Bereich */}
         <div className="text-xs text-text-muted">
           {formatDate(subPackage.start, 'short')} - {formatDate(subPackage.end, 'short')}
         </div>
-
-        {/* Zugewiesene Personen */}
-        {subPackage.assignedTo && subPackage.assignedTo.length > 0 && (
-          <div className="flex gap-1 mt-auto">
-            {subPackage.assignedTo.map((person, idx) => (
-              <div
-                key={idx}
-                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-white"
-                style={{ backgroundColor: getAvatarColor(person) }}
-                title={person}
-              >
-                {getInitials(person)}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

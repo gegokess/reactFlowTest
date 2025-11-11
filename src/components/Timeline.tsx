@@ -365,11 +365,6 @@ const Timeline: React.FC<TimelineProps> = ({
                         }}
                         onMouseLeave={() => setTooltip(null)}
                       >
-                        {/* Farbbalken */}
-                        <div
-                          className="w-1 h-4 rounded-full mr-2"
-                          style={{ backgroundColor: sp.color || '#3B82F6' }}
-                        />
                         {/* Titel */}
                         <span className="text-xs font-medium text-text truncate flex-1">
                           {sp.title}
